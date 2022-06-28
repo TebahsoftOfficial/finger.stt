@@ -34,5 +34,31 @@ Installation
 > python manage.py makemigrations
 > python manage.py migrate
 
+- superuser 생성
+> python manage.py createsuperuser
+
 - Runserver 실행 
 >python manage.py runsslserver --certificate test_django.crt --key test_django.key 0.0.0.0:443
+
+- 카카오톡에서 App ID , Secret 생성 
+> https://developers.kakao.com/console/app 접속 후
+> "내 애플리케이션" -> "애플리케이션 추가하기" 클릭 후 애플리케이션 작성
+> 작성된 앱 클릭 -> 요약정보 -> "REST API 키"를 복사하여 Social Accounts의 "client id"에 입력
+> 제품설정 -> 카카오 로그인 -> 보안 -> "Client Secret"-> "코드"를 복사하여 Social Accounts의 "Secret key"에 입력
+
+- Social Accounts 설정 (카카오 로그인 연동)  
+> 웹브라우저(chrome)에서 admin 페이지 접속
+https://127.0.0.1/admin 
+> 우측 하단 "SITES"->"Sites" 선택
+> 
+> 좌측 하단 "Social accounts" -> "Social application" 메뉴 선택 
+> 우측 상단 "ADD SOCIAL APPLICARION" 선택 => "Add Site" 클릭
+> "Domain name: 127.0.0.1",  "display name:finger.stt"  입력
+> 
+> provider: kakao 선택
+> client id : 카카오에서 App ID 생성 후 입력
+> Secret key : 카카오에서 API Secret 생성 후 입력
+> Available sites 에서 127.0.0.1 선택
+
+
+
