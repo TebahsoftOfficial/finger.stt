@@ -102,12 +102,12 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+#.env
 .venv
-env/
+#env/
 venv/
-ENV/
-env.bak/
+#ENV/
+#env.bak/
 venv.bak/
 
 # Spyder project settings
@@ -130,11 +130,11 @@ dmypy.json
 
 #custom setting
 db.sqlite3
-settings.py
-.settings.py
-fingerai/settings.py
+#settings.py
+#.settings.py
+#fingerai/settings.py
 .idea/
-#migrations/
+migrations/
 kobart_summary/
 _media/interviews/
 staticfiles/
