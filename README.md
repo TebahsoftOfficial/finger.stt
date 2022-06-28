@@ -30,6 +30,8 @@ Installation
 
 - fingerai 폴더에 settings.py 파일 작성
 
+- .envs 파일에 각종 key 정보 
+
 - MySQL 설치 및 데이터베이스 생성 
 
 - 데이터베이스 테이블 생성 및 작성
