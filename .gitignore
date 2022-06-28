@@ -134,7 +134,7 @@ settings.py
 .settings.py
 fingerai/settings.py
 .idea/
-migrations/
+#migrations/
 kobart_summary/
 _media/interviews/
 staticfiles/
