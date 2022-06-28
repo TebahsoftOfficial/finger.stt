@@ -1,0 +1,117 @@
+{% extends 'interviews/interviews_base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% load mathfilters %}
+{% block css_content %}
+  <link href="{% static 'interviews/bootstrap/assets/css/vendor/select.bootstrap5.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'interviews/bootstrap/assets/css/vendor/dataTables.bootstrap5.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'interviews/bootstrap/assets/css/vendor/responsive.bootstrap5.css' %}" rel="stylesheet" type="text/css" />
+{% endblock %}
+
+
+{% block subnav_area %}
+{% endblock %}
+
+{% block main_area %}
+<h1>쿠폰 발급 내역</h1>
+<table id="scroll-horizontal-datatable" class="table nowrap w-100" data-order='[2,"desc"]'>
+    <thead>
+        <tr>
+            <!--th>구매유형</th-->
+            <th>충전시간(분)</th>
+            <!--th>수 량</th-->
+            <th><center>쿠폰코드</center></th>
+            <th>만료일자</th>
+            <th>사용자수</th>
+            <th>구매자</th>
+            <th>입금여부</th>
+        </tr>
+    </thead>
+
+    <tbody>
+    {% for coupon in purchase_list %}
+        <tr>
+            <!--td>{{ coupon.type }}</td-->
+            <!--td>{{ coupon.coupon_count }}</td-->
+            <td style="text-align: right; ">{{ coupon.amount }}</td>
+            <td>{{ coupon.code }}</td>
+            <td>{{ coupon.expire_at|date:"Y-m-d" }}</td>
+            <td>{{ coupon.used_count }}/{{ coupon.user_count }}</td>
+            <td>{{ coupon.owner.username }}</td>
+            {% if coupon.usable == 'true' %}
+
+            <td>
+                <button type="button" class="btn btn-info btn-sm" disabled>입금완료</button>
+            </td>
+            {% elif coupon.usable == 'false' %}
+
+            <td>
+                <button type="button" class="btn btn-success btn-sm" onclick='approve("{{ coupon.code }}");'>입금대기</button>
+            </td>
+            {% endif %}
+
+
+        </tr>
+    {% empty %}
+        <tr>No Coupon yet.</tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<form method="post" enctype="multipart/form-data" id="sentform" style="display:none;">
+    {% csrf_token %}
+</form>
+
+
+{% endblock %}
+
+{% block link_area %}
+{% endblock %}
+
+{% block extra_javascript %}
+<script>
+$(document).ready(function() {
+    $('#scroll-horizontal-datatable').dataTable({
+        "scrollX":200,
+        "pageLength": 50,
+    });
+} );
+
+
+
+
+function approve(code) {
+    var formData =new FormData(document.getElementById("sentform"));
+    formData.append('purchase_code',code);
+
+    $.ajax({
+        contentType : false,
+        processData : false,
+        data : formData,
+        url : "/interviews/purchase/codeApprove/",
+        type : 'POST',
+        success: function(data) {
+            console.log(data);
+            window.location.href="/interviews/purchase/manage/";
+        },
+        error: function(ts) {
+            alert(ts);
+        }
+    });
+    return false;
+}
+
+</script>
+
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/dropzone.min.js' %}"></script>
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/dataTables.select.min.js' %}"></script>
+
+
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/dataTables.bootstrap5.js' %}"></script>
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/dataTables.responsive.min.js' %}"></script>
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/responsive.bootstrap5.min.js' %}"></script>
+
+<!-- Datatable Init js -->
+<script src="{% static 'interviews/bootstrap/assets/js/pages/demo.datatable-init.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% load socialaccount %}
+{% load mathfilters %}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb bg-light-lighten p-2 mb-0">
+        <li class="breadcrumb-item"><a href="#"><i class="uil-home-alt"></i> Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Library</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Data</li>
+    </ol>
+</nav>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid" >
+    <a class="navbar-brand" href="/"><img src="/media/symbol/tebah_symbol01.png" width="20" height="22" >
+      <img src="/media/symbol/tebah_symbol03.png" width="35" height="10" >
+    </a>
+    <div class="nav-item">
+       {% with mtime=manager.max_time utime=manager.use_time %}
+      <span class="badge badge-danger-lighten">사용시간: {{ utime|intdiv:60000 }}분{{ utime|mod:60000|intdiv:1000 }}초
+      </span>
+      <span class="badge badge-danger-lighten">잔여시간: {{ mtime|sub:utime|intdiv:60000}}분 {{ mtime|sub:utime|mod:60000|intdiv:1000 }}초
+      </span>
+      {% endwith %}
+    </div>
+    <button class="btn btn-primary mt-2 mt-md-0" type="button" style="font-size:small; padding:3" data-bs-toggle="offcanvas" data-bs-target="#offcanvasScrolling" aria-controls="offcanvasScrolling" >고객노트</button>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation" style="margin-top: 1px">
+      <span class="mdi mdi-menu"></span>
+    </button>
+
+
+    <div class="collapse navbar-collapse" id="navbarNavDropdown">
+
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item active">
+          <a class="nav-link" href="/interviews/" style="font-size:small; padding:3">상담리스트</a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" href="/interviews/create/" style="font-size:small; padding:3">상담작성</a>
+        </li>
+        <!--li class="nav-item">
+          <a class="nav-link" href="{{ interviews.get_update_url }}">대화 수정</a>
+        </li-->
+        <li class="nav-item">
+          <a class="nav-link" href="{{ interviews.get_absolute_url }}" style="font-size:small; padding:3">상담내용전체</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ interviews.get_summary_url }}" style="font-size:small; padding:3">상담내용요약</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ interviews.get_sentimental_url }}" style="font-size:small; padding:3">감정분석</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ interviews.get_wordcloud_url }}" style="font-size:small; padding:3">단어분석</a>
+        </li>
+      </ul>
+
+      <ul class="navbar-nav ml-auto">
+          {% if user.is_authenticated %}
+            <li class="nav-item">
+              <a class="dropdown-item" href="/accounts/logout/">Log Out</a>
+            </li>
+          {% else %}
+              <li class="nav-item">
+                  <a href="{% provider_login_url 'kakao' %}" id="kakao_login">Log In</a>
+              </li>
+          {% endif %}
+      </ul>
+
+    </div>
+  </div>
+</nav>
+
+<div class="offcanvas offcanvas-top" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1" id="offcanvasScrolling" aria-labelledby="offcanvasTopLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasTopLabel">Colored with scrolling</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+            <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+              <div class="row my-2">
+                <div class="col-8">
+                    <label for="id_comment">고객노트</label>
+                </div>
+
+              </div>
+              <div class="row mb-1">
+                  <div class="col-12">
+                    <textarea name="comment" cols="40" rows="6" maxlength="1000" class="textarea form-control" required id="id_comment" >
+                        {{ client_info.comment }}
+                    </textarea>
+                  </div>
+              </div>
+               <div class="row">
+                   <div class="col-4" >
+                    <button class="btn btn-primary" style="font-size:small; padding:3" type="submit">정보수정</button>
+                   </div>
+               </div>
+            </form>
+    </div>
+</div>
+
+
+
+

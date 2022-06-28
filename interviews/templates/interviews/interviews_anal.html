@@ -1,0 +1,101 @@
+{% extends 'interviews/interviews_base.html' %}
+
+{% block main_area %}
+<h3> {{ interviews.title }} </h3>
+
+    <table class="table table-hover">
+      <tbody>
+      <tr id="slabel">
+      </tr>
+      <tr id="word_cnt">
+      </tr>
+      <tr id="type_count">
+      </tr>
+      <tr id="speak_len">
+      </tr>
+      <tr id="speak_rate">
+      </tr>
+      <tr id="speed">
+      </tr>
+      <!--tr id="senti">
+      </tr>
+      <tr id="pos_count">
+      </tr>
+      <tr id="neg_count">
+      </tr-->
+
+      </tbody>
+    </table>
+
+  <script type="text/javascript">
+  window.onload = function() {
+
+    view_senti();
+    function view_senti() {
+      var speakers = JSON.parse('{{ interviews.speakers }}'.replace(/&quot;/g,'"'));
+      var sents = JSON.parse('{{ sentimental }}'.replace(/&quot;/g,'"'));
+      var chk =0;
+      var name='';
+      var slabel = '', word_cnt= '',type_count='',speak_len= '',speak_rate= '',speed= '',senti= '',pos_count= '',neg_count= '';
+      var islabel = document.getElementById('slabel');
+      //var isenti = document.getElementById('senti');
+      var iword_cnt = document.getElementById('word_cnt');
+      var itype_count = document.getElementById('type_count');
+      var ispeak_len = document.getElementById('speak_len');
+      var ispeak_rate = document.getElementById('speak_rate');
+      var ispeed = document.getElementById('speed');
+      var ispeak_rate = document.getElementById('speak_rate');
+      //var ipos_count = document.getElementById('pos_count');
+      //var ineg_count = document.getElementById('neg_count');
+
+      for(var idx in sents) {
+        if(chk==0) {
+            slabel+='<th><center>'+ '분석유형' + '</center></th>';
+            word_cnt+='<th><center>'+ '발화단어수' + '</center></th>';
+            type_count+='<th><center>'+ '단어종류수' + '</center></th>';
+            speak_len+='<th><center>'+ '대화시간' + '</center></th>';
+            speed+='<th><center>'+ '대화속도(글자수/분)' + '</center></th>';
+            speak_rate+='<th><center>'+ '대화점유율' + '</center></th>';
+            //senti+='<th><center>'+ '대화감정' + '</center></th>';
+            //pos_count+='<th><center>'+ '호감회수' + '</center></th>';
+            //neg_count+='<th><center>'+ '불만회수' + '</center></th>';
+        }
+        /*
+        if (idx == '1')  name = '{{ interviews.role_label0 }}';
+        else if (idx == '2') name = '{{ interviews.role_label1 }}';
+        else if (idx == '3') name = '{{ interviews.role_label2 }}';
+        else if (idx == '4') name = '{{ interviews.role_label3 }}';
+        else if (idx == '5') name = '{{ interviews.role_label4 }}';
+        */
+        name = speakers[chk].name;
+        slabel+='<th><center>'+ name + '</center></th>';
+        word_cnt+='<td><center>'+ sents[idx].word_count + ' 단어'+'</center></td>';
+        type_count+='<td><center>'+ sents[idx].type_count + ' 단어'+'</center></td>';
+        speak_len+='<td><center>'+ Math.floor(sents[idx].speak_len/1000) + ' 초'+'</center></td>';
+        speed+='<td><center>'+ Math.floor(sents[idx].speed) + '</td>';
+        speak_rate+='<td><center>'+ Math.floor(sents[idx].speak_rate*100) + '%'+'</center></td>';
+        //senti+='<td><center>'+ sents[idx].senti + '</center></td>';
+        //pos_count+='<td><center>'+ sents[idx].pos_count + '</center></td>';
+        //neg_count+='<td><center>'+ sents[idx].neg_count + '</center></td>';
+
+        //if(chk==1) break;
+        chk=chk+1;
+      }
+
+      chk =0;
+
+
+      islabel.innerHTML = slabel;
+      //isenti.innerHTML = senti;
+      iword_cnt.innerHTML =word_cnt;
+      itype_count.innerHTML =type_count;
+      ispeak_len.innerHTML = speak_len;
+      ispeak_rate.innerHTML = speak_rate;
+      ispeed.innerHTML = speed;
+      //ipos_count.innerHTML = pos_count;
+      //ineg_count.innerHTML = neg_count;
+
+    };
+  }
+  </script>
+{% endblock %}

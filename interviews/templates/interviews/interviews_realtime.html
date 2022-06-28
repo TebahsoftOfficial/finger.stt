@@ -1,0 +1,225 @@
+{% extends 'interviews/interviews_base.html' %}
+{% load mathfilters %}
+{% load static %}
+{% block css_content %}
+<style>
+textarea.autosize
+{
+    border:1px solid #999999;
+    width:98%;
+    margin:5px 0;
+    padding:1%;
+}
+
+</style>
+
+{% endblock %}
+
+{% block main_area %}
+    <div class="row mb-1" >
+
+       <h5> <center >
+          대화제목 : 실시간 음성입력
+        </center></h5><br>
+
+        <form method="post" enctype="multipart/form-data">
+            <label for="id_title" class="form-label" style="padding-top:6; float:left;">대화 제목</label>  
+            <div class="row mb-2">
+              <div class="col-9">
+                <input type="text" value="{{ interviews.client_name }}" id="id_client_name" name="client_name" style="display:none;">                  
+                
+                <input type="text" class="form-control" name="title" id="id_title" >
+              </div>
+              
+            </div>  
+        </form>
+
+
+    </div> 
+
+    <div class="mt-4" id="div_language">
+      <h2 class="mb-3 text-dark">Select Language</h2>
+      <select class="form-select bg-secondary text-light" id="select_language" onchange="updateCountry();"></select>
+      <select class="form-select bg-secondary text-light mt-2" id="select_dialect"></select>
+    </div>
+
+    <h2 class="mt-4 text-dark">Transcript</h2>
+    <!--div class="p-3" style="border: 1px solid gray; height: 300px; border-radius: 8px;">
+      <span id="final" class="text-dark"></span>
+    </div-->
+    <div id="final">
+
+    </div>
+    <span id="interim" class="text-secondary"></span>
+    <div class="mt-4">
+      <button class="btn btn-success" id="start">Start</button>
+      <button class="btn btn-danger" id="stop">Stop</button>
+      <p id="status" class="lead mt-3 text-light" style="display: none">Listenting ...</p>
+    </div>
+    
+{% endblock %}
+
+{% block extra_javascript %}
+<script src="{% static 'interviews/bootstrap/assets/js/language.js' %}"></script>
+
+<script>
+
+/*    
+let listening;
+let recognition;
+let main = document.getElementsByTagName("main")[0];
+function speech_listen() {
+    listening ? speech_stop() : speech_start();
+            listening = !listening;
+}
+
+function speech_stop() {
+    main.classList.remove("speaking");
+    recognition.stop();
+    button.textContent = "Start listening";    
+}
+
+function speech_start() {
+    main.classList.add("speaking");
+    recognition.start();
+    button.textContent = "Stop listening";
+}
+
+function speech_result(event){
+    var text='';
+    var res;
+    var str='';
+    //$('#result').html('');
+
+
+    for (res of event.results) {
+        console.log(res.isFinal);
+        if (res.isFinal) {
+            text = res[0].transcript;
+            str = '<div class="col-8 final">'
+                str += '<textarea class="isentence autosize" gened="false" cols="100">' +text + '</textarea>'
+            str += '</div>'                
+        }
+    } 
+  
+    $('#result').append(str);
+
+}
+*/
+let speechRecognition;
+
+
+function updateCountry() {
+
+
+  for (var i = select_dialect.options.length - 1; i >= 0; i--) {
+    select_dialect.remove(i);
+  }
+  var list = langs[select_language.selectedIndex];
+  for (var i = 1; i < list.length; i++) {
+    select_dialect.options.add(new Option(list[i][1], list[i][0]));
+  }
+  select_dialect.style.visibility = list[1].length == 1 ? 'hidden' : 'visible';
+  speechRecognition.lang = document.querySelector("#select_dialect").value;
+  console.log("UpdateCountry!: "+document.querySelector("#select_dialect").value);    
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+    let select_language = document.querySelector('#select_language');
+    let select_dialect = document.querySelector('#select_dialect');
+
+    for (var i = 0; i < langs.length; i++) {
+      select_language.options[i] = new Option(langs[i][0], i);
+    }
+
+ 
+    if ("webkitSpeechRecognition" in window) {
+    // Initialize webkitSpeechRecognition
+    speechRecognition = new webkitSpeechRecognition();
+
+    select_language.selectedIndex = 28;
+    updateCountry();
+    select_dialect.selectedIndex = 28; 
+
+    // String for the Final Transcript
+    //let final_transcript = "";
+
+    // Set the properties for the Speech Recognition object
+    speechRecognition.continuous = true;
+    speechRecognition.interimResults = false;
+    speechRecognition.lang = document.querySelector("#select_dialect").value;
+    console.log("Language: "+ document.querySelector("#select_dialect").value)
+
+    // Callback Function for the onStart Event
+    speechRecognition.onstart = () => {
+      // Show the Status Element
+      document.querySelector("#status").style.display = "block";
+    };
+    speechRecognition.onerror = () => {
+      // Hide the Status Element
+      document.querySelector("#status").style.display = "none";
+    };
+    speechRecognition.onend = () => {
+      // Hide the Status Element
+      console.log("End speech")
+      document.querySelector("#status").style.display = "none";
+    };
+
+    speechRecognition.onresult = (event) => {
+      // Create the interim transcript string locally because we don't want it to persist like final transcript
+      let interim_transcript = "";
+      let final_transcript = "";
+      let today = new Date();   
+
+      let hours = today.getHours(); // 시
+      let minutes = ('0'+today.getMinutes()).slice(-2);  // 분
+      let seconds = ('0'+today.getSeconds()).slice(-2);  // 초
+      // Loop through the results from the speech recognition object.
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        // If the result item is Final, add it to Final Transcript, Else add it to Interim transcript
+        if (event.results[i].isFinal) {
+          final_transcript += event.results[i][0].transcript;
+        } else {
+          interim_transcript += event.results[i][0].transcript;
+        }
+      }
+
+      let speakers = ['lee','kim','choi']
+      let output='<text>'+hours+':'+minutes+':'+seconds;
+      output+= '<div class="row"><div class="col-1 pt-2"></div><div class="col-8">'
+      output+= '<textarea class="isentence autosize">'
+      output+= final_transcript+'</textarea>'   // enter code 13 is inserted
+      output+= '</div>'
+      output+= '<div class="col-3 py-1 px-3 rounded"><select class="form-select opts" aria-label="Default select example">'
+
+      for(var j=0; j<speakers.length; j++) {
+          if ( j==0 ) output+= '<option selected value="' + speakers[j]+ '">' + speakers[j] +'</option>';
+          else  output+= '<option value="' + speakers[j]+ '">' + speakers[j]+ '</option>'
+      }
+      output+= '</select></div></div>'
+
+      // Set the Final transcript and Interim transcript.
+      //document.querySelector("#final").innerHTML = final_transcript;
+      $('#final').append(output)
+      document.querySelector("#interim").innerHTML = interim_transcript;
+    };
+
+    // Set the onClick property of the start button
+    document.querySelector("#start").onclick = () => {
+      // Start the Speech Recognition
+      speechRecognition.start();
+    };
+    // Set the onClick property of the stop button
+    document.querySelector("#stop").onclick = () => {
+      // Stop the Speech Recognition
+      speechRecognition.stop();
+    };
+  } 
+  else {
+    console.log("Speech Recognition Not Available");
+  }
+})
+
+</script>
+
+{% endblock %}

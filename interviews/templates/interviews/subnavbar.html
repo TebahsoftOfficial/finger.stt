@@ -1,0 +1,94 @@
+{% load socialaccount %}
+<nav class="navbar navbar-expand navbar-light bg-light">
+  <div class="container-fluid">
+
+    <div class="collapse navbar-collapse col-1" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-0 mb-lg-0">
+        <a class="navbar-brand" href="/interviews/client/{{interviews.client.pk}}" style="font-size:medium; padding-top:0;">&nbsp
+          <strong><i class="dripicons-user" style="padding-top:0;"></i>&nbsp{{client_info.name}}</strong></a>
+      </ul>
+      <ul class="navbar-nav me-auto mb-0 mb-lg-0">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size:medium; padding-top:1;">
+            <strong> 메뉴선택</strong>
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <li><a class="dropdown-item" href="{{ interviews.get_absolute_url }}" style="font-size:medium; padding:3">
+                  &nbsp&nbsp<i class="dripicons-clipboard"></i><strong>상담전체</strong></a></li>
+            <li><a class="dropdown-item" href="{{ interviews.get_summary_url }}" style="font-size:medium; padding:3" id="id_summ">
+                  &nbsp&nbsp<i class="dripicons-checklist"></i><strong>상담요약</strong></a></li>
+            {% if interviews.stt_lang == 'ko-KR' %}
+            <li><a class="dropdown-item" href="{{ interviews.get_sentimental_url }}" style="font-size:medium; padding:3">
+                  &nbsp&nbsp<i class="dripicons-heart"></i><strong>감정분석</strong></a></li>
+            <li><a class="dropdown-item" href="{{ interviews.get_wordcloud_url }}" style="font-size:medium; padding:3">
+                  &nbsp&nbsp<i class="dripicons-graph-pie"></i><strong>단어분석</strong></a></li>
+            {% else %}
+            <li><a class="dropdown-item" href="#" style="font-size:medium; padding:3">
+                  &nbsp&nbsp<i class="dripicons-heart"></i>감정분석(준비중)</a></li>
+            <li><a class="dropdown-item" href="#" style="font-size:medium; padding:3">
+                  &nbsp&nbsp<i class="dripicons-graph-pie"></i>단어분석(준비중)</a></li>
+            {% endif %}
+            <li><a class="dropdown-item" style="font-size:medium; padding:3" onclick="generate_code('{{ interviews.pk }}')">
+                  &nbsp&nbsp<i class="mdi mdi-share-variant me-1"></i><strong>공유코드</strong></a>
+                    <form class="px-4 py-3" id="id_cgenForm" method="post" enctype="multipart/form-data" name="cgenForm" style="display:none;">
+                        {% csrf_token %}
+                        <!--input type="text" class="form-control" name="code_generate" id="id_code_generate" style="display:none;"-->
+                        <input type="text" class="form-control" name="interview_id" id="id_interview_id">
+                        <button class="btn btn-info rounded-pill" type="submit" id="buttonx"></button>
+                    </form>
+            </li>
+
+          </ul>
+        </li>
+        <script>
+            function generate_code(intv_id) {
+                cds = makecode(8);
+
+                var formData1 =new FormData(document.getElementById("id_cgenForm"));
+                formData1.append('code_generate',cds);
+                formData1.append('interview_id',intv_id);
+                textcopy(cds);
+                $.ajax({
+                    contentType : false,
+                    processData : false,
+                    data : formData1,
+                    url : "/interviews/generate/code/",
+                    type : 'POST',
+                    success: function (data) {
+                    // window.location.replace("/interviews/");
+                    },
+                    error: function (xhr, status) {
+                        alert(xhr + " : " + status);
+                    }
+                });
+            }
+
+            function makecode(length) {
+               var result           = '';
+               var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+               var charactersLength = characters.length;
+               for ( var i = 0; i < length; i++ ) {
+                  result += characters.charAt(Math.floor(Math.random() * charactersLength));
+               }
+               return result;
+            }
+
+            function textcopy(p1) {
+              const t = document.createElement("textarea");
+              document.body.appendChild(t);
+              t.value = p1;
+              t.select();
+              document.execCommand('copy');
+              alert("다른 사용자와 대화 공유용 코드\n공유코드에 입력하면 대화가 생성됩니다.\n\n클립보드 복사 : " + t.value +"\n\n유효기간 7일 이내에 코드를 등록하세요.");
+              document.body.removeChild(t);
+
+            }
+            </script>
+      </ul>
+    </div>
+    <div class="col-11"></div>
+
+  </div>
+</nav>
+
+

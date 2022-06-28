@@ -1,0 +1,96 @@
+{% load socialaccount %}
+{% load mathfilters %}
+{% load i18n %}
+
+
+
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light" style="margin:0; padding:0;">
+
+  <div class="container-fluid" >
+    <a class="navbar-brand" href="/">
+        <img src="/media/symbol/tebah_symbol01.png" width="30" height="33" >
+      <img src="/media/symbol/tebah_symbol03.png" width="70" height="20" >
+    </a>
+
+    <div class="nav-item" style="margin:0; padding:0;">
+       {% with mtime=manager.max_time utime=manager.use_time ptime=manager.paid_time %}
+        {% with ctime=mtime|sub:utime %}
+      <!--span class="badge badge-danger-lighten">사용: {{ utime|intdiv:60000 }}'{{ utime|mod:60000|intdiv:1000 }}''
+      </span-->
+        <span class="alert alert-dark bg-dark text-white border-0 mb-0 px-1 py-0" role="alert" style="font-size:small;">
+            잔여: {{ ptime|add:ctime }}분
+        </span>
+        {% endwith %}
+      {% endwith %}
+
+    </div>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation" style="margin: 0px; padding:1px;">
+      <i class="dripicons-menu" ></i>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNavDropdown" style="margin-top: 0px; padding:1px;">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item active">
+          <a class="nav-link" href="/interviews/" style="font-size:medium; padding:3">
+              &nbsp&nbsp<i class="dripicons-list"></i><strong>상담리스트</strong></a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" href="/interviews/create/norm/" style="font-size:medium; padding:3">
+              &nbsp&nbsp<i class="dripicons-document-edit"></i><strong>상담작성</strong></a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="nav-item dropdown" style="margin:0; padding:0;" >
+            <span>
+                <a class="navbar-brand" href="http://pf.kakao.com/_XxiQTb/chat" style="margin:0; padding:0;">
+                    <img src="/media/symbol/connect.png" width="77" height="26" style="margin:0; padding:0;" >
+                </a>
+            </span>
+            <button class="btn btn-light dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <strong>{{ user.username }}</strong>
+            </button>
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+            {% if user.is_authenticated %}
+                {% if user.is_superuser %}
+
+                  <!--a class="nav-link" href="/interviews/purchase/" style="font-size:medium; padding:3">
+                      &nbsp&nbsp<i class="dripicons-briefcase"></i><strong>쿠폰발급</strong></a-->
+
+                  <a class="nav-link" href="/interviews/purchase/manage/" style="font-size:medium; padding:3">
+                    &nbsp&nbsp<i class="dripicons-briefcase"></i><strong>쿠폰관리</strong></a>
+                  <!--a class="nav-link" href="/interviews/purchase/ownlist/" style="font-size:medium; padding:3">
+                    &nbsp&nbsp<i class="dripicons-cart"></i><strong>구매내역</strong></a-->
+
+
+
+
+                {% endif %}
+                      <a class="nav-link" href="/interviews/purchase/request/" style="font-size:medium; padding:3">
+                      <!--a class="nav-link" href="https://smartstore.naver.com/finger_ai/category/ALL?cp=1" style="font-size:medium; padding:3" target="_blank"-->
+                     &nbsp&nbsp<i class="dripicons-cart"></i><strong>시간충전</strong></a>                
+                      <a class="nav-link" href="/interviews/purchase/ownlist/" style="font-size:medium; padding:3">
+                         &nbsp&nbsp<i class="dripicons-cart"></i><strong>구매내역</strong></a>
+                      <a class="nav-link" href="/interviews/purchase/regist/norm/" style="font-size:medium; padding:3">
+                         &nbsp&nbsp<i class="dripicons-cart"></i><strong>쿠폰등록</strong></a>
+
+
+                <a class="nav-link" href="/accounts/logout/" style="font-size:medium; padding:3">
+                    &nbsp&nbsp<i class="mdi mdi-logout"></i><strong>로그아웃</strong></a>
+
+            {% else %}
+
+                  <a href="{% provider_login_url 'kakao' %}" id="kakao_login">Log In</a>
+
+            {% endif %}
+
+            </div>
+
+    </div>
+
+  </div>
+
+</nav>
+

@@ -1,0 +1,72 @@
+{% load static %}
+{% load socialaccount %}
+<html lang="en">
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap CSS -->
+  <!--link rel="stylesheet" href="{% static 'interviews/bootstrap/bootstrap.min.css' %}" media="screen"/-->
+  <link rel="stylesheet" href="{% static 'interviews/bootstrap/assets/css/app.min.css' %}" media="screen"/>
+
+  <title>{% block head_title %}Finger.AI{% endblock %}</title>
+</head>
+
+<body>
+<br>
+    <div class="navbar-brand" href="/"><img style="margin-left:5px" src="/media/symbol/tebah_symbol01.png" width="30" height="33">
+      <img src="/media/symbol/tebah_symbol03.png" width="60" height="20">
+    </div>
+<hr>
+<br>
+  <div class="d-grid gap-2 col-4 mx-auto">
+    <a class="btn btn-primary btn-md" tabindex="-1" role="button" aria-disabled="true" data-bs-toggle="modal" data-bs-target="#loginModal">Log In</a>
+    <!--a href="/interviews/create/" class="btn btn-primary btn-md" tabindex="-1" role="button" aria-disabled="true">대화 생성</a>
+    <a href="/interviews/" class="btn btn-secondary btn-md" tabindex="-1" role="button" aria-disabled="true">대화 목록</a-->
+  </div>
+
+
+
+
+
+
+
+
+
+
+<div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="loginModalLabel"> <i class="fas fa-sign-in-alt"></i>&nbsp Log In</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <a role="button" class="btn btn-outline-dark btn-block btn-sm" href="{% provider_login_url 'kakao' %}"><i class="fab fa-google"></i>&nbsp&nbsp Log in with Kakao</a>
+                        <a role="button" class="btn btn-outline-dark btn-block btn-sm" href="/accounts/login/"><i class="far fa-envelope"></i>&nbsp&nbsp Log in with E-mail</a>
+                    </div>
+                    <div class="col-md-6">
+                        <a role="button" class="btn btn-outline-dark btn-block btn-sm" href="/accounts/signup/"><i class="far fa-envelope"></i>&nbsp&nbsp Sign Up with E-mail</a>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js" integrity="sha384-W8fXfP3gkOKtndU4JGtKDvXbO53Wy8SZCQHczT5FMiiqmQfUpWbYdTil/SxwZgAN" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.min.js" integrity="sha384-skAcpIdS7UcVUC05LJ9Dxay8AXcDYfBJqt1CJ85S/CFujBsIzCIv+l9liuYLaMQ/" crossorigin="anonymous"></script>
+
+</body>
+
+</html>

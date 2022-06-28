@@ -1,0 +1,191 @@
+{% load static %}
+{% load i18n %}
+{% load socialaccount %}
+
+<html lang="en">
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta content="Coderthemes" name="author" />
+
+  <!-- Bootstrap CSS -->
+  <!--link rel="stylesheet" href="{% static 'interviews/bootstrap/bootstrap.min.css' %}" media="screen"/-->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{% static 'interviews/bootstrap/assets/css/icons.min.css' %}" rel="stylesheet" type="text/css" />
+  <link rel="stylesheet" href="{% static 'interviews/bootstrap/assets/css/app.min.css' %}" media="screen" id="light-style" />
+<!--link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous"-->
+  <script src="https://kit.fontawesome.com/90b0dd0984.js" crossorigin="anonymous"></script>
+    {% block css_content %}
+    {% endblock %}
+  <title>인공지능 대화관리, Finger.ai</title>
+
+  <link rel="shortcut icon" type="image/png" href="/media/symbol/tebah_symbol02.png">
+
+</head>
+
+<body>
+
+{% if user.is_authenticated %}
+{% block nav_area %}
+{% include 'interviews/navbar.html' %}
+{% endblock %}
+{% block subnav_area %}
+{% include 'interviews/subnavbar.html' %}
+{% endblock %}
+
+<div class="container my-3">
+    <div class="row">
+
+        <div class="col-md-8 col-lg-8" id="main-area">
+
+
+            {% block main_area %}
+            {% endblock %}
+            {% block link_area %}
+            <a href="/interviews/create/norm/" class="btn btn-light btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>
+                <i class="dripicons-document-edit"></i><span><strong>&nbsp상담작성</strong></span></a>
+            <a href="{{ interviews.get_absolute_url }}" class="btn btn-light btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>
+                <i class="dripicons-clipboard"></i><span><strong>&nbsp상담전체</strong></span></a>
+            <a href="{{ interviews.get_summary_url }}" class="btn btn-light btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>
+                <i class="dripicons-checklist"></i><span><strong>&nbsp상담요약</strong></span></a>
+            <a href="{{ interviews.get_sentimental_url }}" class="btn btn-light btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>
+                <i class="dripicons-heart"></i><span><strong>&nbsp감정분석</strong></span></a>
+            <a href="{{ interviews.get_wordcloud_url }}" class="btn btn-light btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>
+                <i class="dripicons-graph-pie"></i><span><strong>&nbsp단어분석</strong></span></a>
+            {% endblock %}
+        </div>
+        {% block widget_area %}
+
+
+
+
+            <!-- Search Widget -->
+            <!--div class="card my-4">
+                <h5 class="card-header">Search</h5>
+                <div class="card-body">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search for..." id="search-input">
+                        <span class="input-group-btn">
+                                <button class="btn btn-secondary" type="button" onclick="searchInterviews();">검색</button>
+                         </span>
+                    </div>
+                </div>
+            </div-->
+            <!-- Categories Widget -->
+            <!--div class="card my-4" id="clients_list-card">
+                <h5 class="card-header">고객별 상담분류</h5>
+                <div class="card-body">
+                    <div class="row">
+                        <ul>
+                            {% for client in clients_list %}
+                                <li>
+                                    <a href="{{ client.get_absolute_url }}">{{ client }} ({{ client.interviews_set.count }})</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+
+                    </div>
+                </div>
+            </div-->
+
+
+        <div class="col-md-4 col-lg-4 mt-3">
+            <center><img id="refill_img" src="/media/symbol/free_refill.png" style="width: 85%; height: auto;"></center><br>
+            <center><a href="https://forms.gle/TYdqPjZiHj5rn1Ek9" target="_blank" class="btn btn-dark rounded-pill" role="button" style='padding:5'>설문조사작성</a></center>
+        </div>
+
+        <!--script>
+            function searchInterviews(){
+                let searchValue = document.getElementById('search-input').value.trim();
+                if (searchValue.length > 1){
+                    location.href="/interviews/search/" + searchValue + "/";
+                }
+                else{
+                    alert('검색어('+ searchValue +')가 너무 짧습니다.');
+                }
+            };
+
+            document.getElementById('search-input').addEventListener('keyup', function(event){
+                if(event.key === 'Enter'){
+                    searchInterviews();
+                }
+            });
+        </script-->
+        {% endblock %}
+    </div>
+</div>
+
+
+
+{% else %}
+        <!--div class="d-grid gap-2 col-4 mx-auto mt-3" -->
+    <div class="row mt-3">
+        <center>
+        <img src="/media/symbol/tebah_symbol02.png" width="200" height="220">
+
+        </center>
+    </div>
+    <br>
+    <div class="row" style="display:none;">
+        <div class="col-1"></div>
+        <div class="alert alert-danger col-10" role="alert">
+            <center><strong>베타서비스 진행중!!!</strong><br>
+                시스템은 별도의 고지없이 서버점검이 진행될 수 있습니다.
+            문제가 발생하면 아래 카카오 채널로 메시지를 보내주세요.<br>
+           <a href="http://pf.kakao.com/_XxiQTb" target="_blank">http://pf.kakao.com/_XxiQTb</a></center>
+        </div>
+        <div class="col-1"></div>
+    </div>
+
+    <!--div class="d-grid gap-2 col-3 mx-auto " -->
+    <div>
+    <br>
+        <center>
+            <a href="{% provider_login_url 'kakao' %}" id="kakao_login">
+       <img src="/media/symbol/kakao_login_medium_narrow.png" >
+                 </a>
+        </center>
+
+    </div>
+<br>
+<br>
+<br>
+{% endif %}
+
+
+{% block javascript %}
+    <!-- bundle -->
+<!--script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js" integrity="sha384-W8fXfP3gkOKtndU4JGtKDvXbO53Wy8SZCQHczT5FMiiqmQfUpWbYdTil/SxwZgAN" crossorigin="anonymous"></script-->
+<!--script src="https://unpkg.com/@popperjs/core@2"></script-->
+<!--script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.min.js" integrity="sha384-skAcpIdS7UcVUC05LJ9Dxay8AXcDYfBJqt1CJ85S/CFujBsIzCIv+l9liuYLaMQ/" crossorigin="anonymous"></script-->
+<!--script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"></script-->
+<script src="{% static 'interviews/bootstrap/assets/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'interviews/bootstrap/assets/js/vendor.min.js' %}"></script>
+<script src="{% static 'interviews/bootstrap/assets/js/app.min.js' %}"></script>
+<!--script src="https://kit.fontawesome.com/90b0dd0984.js" crossorigin="anonymous"></script-->
+<script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+<!--script src="{% static 'interviews/bootstrap/assets/js/jquery.min.js' %}"></script-->
+    <script src="{% static 'interviews/bootstrap/assets/js/popper.min.js' %}"></script>
+
+{% endblock %}
+{% block extra_javascript %}{% endblock %}
+</body>
+<footer>
+<div class="row">
+    <div class="col-1"></div>
+    <div class="col-10">
+    <p style="line-height:150%;">COPYRIGHT © TEBAH SOFT. 2021. ALL RIGHTS RESERVED.<br>
+   사업자등록번호: 440-87-02207, 상호명:테바소프트(주), 대표자명:오정섭, 사업장주소:대전 유성구 대덕대로512번길 20<br>
+        통신판매신고: 제2022-대전유성-0475호<br>
+
+        E-mail: tebahsoft@gmail.com &nbsp;&nbsp;&nbsp;고객센터: 070-7565-8698<br>
+        개인정보책임: 오정섭(070-7565-8698)</p>
+
+        <a href = "/media/private_guard.pdf" target="_blank">[개인정보보호규정]</a>
+        &nbsp;&nbsp;<a href = "/media/usage_rule.pdf" target="_blank">[이용약관]</a>
+    </div>
+    <div class="col-1"></div>
+</div>
+</footer>
+</html>

@@ -1,0 +1,51 @@
+<div class="container my-3">
+    <div class="row">
+        <div class="col-md-8 col-lg-9" id="main-area">
+            {% block main_area %}
+            {% endblock %}
+            {% block link_area %}
+            <a href="/interviews/create/" class="btn btn-primary btn-sm" tabindex="-1" role="button" aria-disabled="true">상담작성</a>
+            <a href="{{ interviews.get_absolute_url }}" class="btn btn-primary btn-sm" tabindex="-1" role="button" aria-disabled="true">상담전체</a>
+            <a href="{{ interviews.get_summary_url }}" class="btn btn-primary btn-sm" tabindex="-1" role="button" aria-disabled="true">상담요약</a>
+            <a href="{{ interviews.get_sentimental_url }}" class="btn btn-primary btn-sm" tabindex="-1" role="button" aria-disabled="true">감정분석</a>
+            <a href="{{ interviews.get_wordcloud_url }}" class="btn btn-primary btn-sm" tabindex="-1" role="button" aria-disabled="true">단어분석</a>
+            {% endblock %}
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <!-- Search Widget -->
+            <div class="card my-4">
+                <h5 class="card-header">Search</h5>
+                <div class="card-body">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search for..." id="search-input">
+                        <span class="input-group-btn">
+                                <button class="btn btn-secondary" type="button" onclick="searchInterviews();">Go!</button>
+                         </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function searchInterviews(){
+        let searchValue = document.getElementById('search-input').value.trim();
+        if (searchValue.length > 1){
+            location.href="/interviews/search/" + searchValue + "/";
+        }
+        else{
+            alert('검색어('+ searchValue +')가 너무 짧습니다.');
+        }
+    };
+
+    document.getElementById('search-input').addEventListener('keyup', function(event){
+        if(event.key === 'Enter'){
+            searchInterviews();
+        }
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js" integrity="sha384-W8fXfP3gkOKtndU4JGtKDvXbO53Wy8SZCQHczT5FMiiqmQfUpWbYdTil/SxwZgAN" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.min.js" integrity="sha384-skAcpIdS7UcVUC05LJ9Dxay8AXcDYfBJqt1CJ85S/CFujBsIzCIv+l9liuYLaMQ/" crossorigin="anonymous"></script>

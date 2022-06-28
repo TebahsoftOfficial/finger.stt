@@ -1,0 +1,277 @@
+{% extends 'interviews/interviews_base.html' %}
+{% load static %}
+{% block css_content %}
+<!-- plugin js -->
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/dropzone.min.js' %}"></script>
+<script src="https://js.tosspayments.com/v1"></script>
+{% endblock %}
+
+
+{% block subnav_area %}
+{% endblock %}
+
+{% block main_area %}
+
+<p class="h3"> 쿠폰 구매 </p><br>
+<div class="row">
+    <div class="col-6 mt-1">
+        <label style="py-2">&nbsp;&nbsp;구매유형</label><br>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="inlineRadioOptions" id="cp_privt" value="privt" checked>
+          <label class="form-check-label" for="cp_privt">개인</label>
+        </div>
+        {% if user.is_superuser %}     
+            <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="inlineRadioOptions" id="cp_group" value="group">
+            <label class="form-check-label" for="cp_group">단체</label>
+            </div>
+        {% endif %}
+    </div>
+    <div class="col-6">
+        <label for="id_coupon_select" class="form-label">상품선택</label>
+        <select class="form-select" id="id_coupon_select" onchange="cs_select();">
+            <option value="0" >시간선택</option>
+            <option value="60" >1시간</option>
+            <option value="240" >4시간</option>
+            <option value="600">10시간</option>
+            {% if user.username == 'tb_guest' or user.is_superuser %}
+                <option value="1">1분</option> 
+            {% endif %}
+        </select>
+    </div>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th colspan="2" scope="col">상품</th>
+            <th scope="col">그룹인원</th>
+            <!--th scope="col">쿠폰개수</th-->
+            <th scope="col">총액</th>
+        </tr>
+    </thead>
+    <tbody id="add_coupon">
+
+    </tbody>
+    <tr>
+        <td colspan="5"><ul>
+            <!--li>그룹인원은 하나의 쿠폰번호로 등록가능한 인원 수 입니다. (10이상마다 1% 추가할인)</li-->
+            <li>상품 등록 <strong>유효기간은 구매한 날로 부터 1년</strong>입니다.</li>
+            <li>동일아이디에서 쿠폰번호는 한번만 등록가능하니 유의해 주시기 부탁드립니다.</li>
+        </ul></td>
+    </tr>
+
+    <tr>
+        <td colspan="2"><strong>총상품금액</strong></td>
+        <td colspan="3" id="total_price"></td>
+
+    </tr>
+    {% if user.is_superuser %}    
+    <tr>
+        <td colspan="5">
+            <label for="id_order_where" class="form-label">구매처선택</label>
+            <select class="form-select" id="buy_where">
+                <option value="naver_store" selected >네이버스토어</option>
+                <option value="daum_store" >다음스토어</option>
+                <option value="admin_store">관리자직접생성</option>
+            </select>
+        </td>        
+    </tr>
+    {% else %}
+    <tr>
+        <input type="text" id="buy_where" value="direct" style="display:none;" >
+    </tr>
+    {% endif %}    
+
+</table>
+
+<button id="payment-button" class="btn"  onclick="submitPurchase();">
+    <img src="/media/symbol/purchase.png" width="70%" height="70%">
+</button>
+
+
+<div class="alert alert-primary" role="alert">
+            <center><strong>녹음파일 활용 동의 및 서약서</strong></center><br>
+            1. Finger.ai는 AI에 의해서 자동으로 녹취된 내용을 한글로 바꾸어 드리는 서비스로서, Finger.ai를 운영하고 있는 테바소프트(주)는 고객이 업로드한 파일에
+            대하여 고객 동의 없이는 어떤한 경우에도 열람하거나, 청취하지 않음을 서약합니다.<br><br>
+            2. 고객님이 Finger.ai에 업로드하시는 녹음파일은 불법적으로 녹취된 파일이 아니어야 하며, 녹음파일에 대한 불법성 여부에 대한 책임은 사용자 개인이 책임져야 합니다.
+</div>
+<div class="alert alert-primary" role="alert">
+    <center><strong>환불규정</strong></center><br>
+결제한 시간을 전혀 소진하지 않았을 경우에 한하여, 환불을 요청하면 이를 환불 받을 수 있으나, 결제수단에 따라 제한이 될 수 있습니다. 환불 시에는 카드사의 정책에 따라 환불시에도 수수료 차감이 있는 경우 환불수수료(5%)를 공제하고 남은 금액을 환불합니다. 그러나 카드사등에서 환불 수수료의 차감이 없는 경우 전액 환불가능합니다.
+회원이 이미 사용한 서비스의 경우 환불되지 않습니다.<br>
+    회원이 유료로 결제한 서비스 및 무상으로 지급받은 서비스 이용권은 발행일로부터 1년 경과 시까지 이용하지 않을 경우, 상법상의 상사소멸시효에 따라 소멸될 수 있습니다.
+</div>
+
+<form method="post" enctype="multipart/form-data" id="sentform" style="display:none;">
+    {% csrf_token %}
+</form>
+
+{% endblock %}
+
+{% block extra_javascript %}
+<script>
+   var total;
+   var orderList='';
+   var orderID;
+
+  var button = document.getElementById('payment-button');
+  var origin = $(location).attr('origin');
+
+    /*
+    if ('{{ user.username }}' == 'pg_guest')
+        button.addEventListener('click', payment_toss() );
+    else if ( '{{ user.is_superuser }}' == 'True')
+        button.addEventListener('click', submitPurchase() );
+    */
+
+    function payment_toss() {
+        var clientKey = '{{clientKey}}'; //'test_ck_D4yKeq5bgrpXmmoXXnJrGX0lzW6Y' //'test_ck_5GePWvyJnrKRW7zJmKOVgLzN97Eo';
+        
+        var tossPayments = TossPayments(clientKey);
+        //orderID = makecode(21);
+        orderList='';
+        var mbc = document.getElementsByClassName('mbcount');
+        for (var i=0; i<sel.length; i++) {
+            orderList = orderList + sel[i].innerHTML + mbc[i].value +'명';
+            if(i!=(sel.length-1)) orderList = orderList + ','
+        }
+
+        tossPayments.requestPayment('카드', {
+          amount: total,
+          orderId: orderID, //'Gkf6St4i81UYhwx1uKf1E',
+          orderName: orderList, //'토스 티셔츠 외 2건',
+          customerName: '',//$('#order_name').html(), //'박토스',
+          successUrl: origin+'/interviews/purchase/paysuccess',
+          failUrl: origin+'/interviews/purchase/payfail',
+        })
+    }
+
+    function makecode(length) {
+       var result           = '';
+       var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+       var charactersLength = characters.length;
+       for ( var i = 0; i < length; i++ ) {
+          result += characters.charAt(Math.floor(Math.random() * charactersLength));
+       }
+       return result;
+    }
+
+   // var ac;
+
+    window.onload = function () {
+       // ac = document.getElementById("add_coupon");
+    }
+
+
+    function cs_select() {
+        //alert( $("#id_coupon_select option:selected").val() )
+        //console.log("select changed!!");
+        if ( $("#id_coupon_select option:selected").val() == "0" ) return;
+        ac_str ='<tr>';
+        sel = $("#id_coupon_select option:selected").text();
+        if (sel =='1시간')
+            ac_str+='<th colspan="2" scope="row"><img src="/media/symbol/hour1_coupon.jpg" width="20%"><mytag class="ctype">'+sel+'</mytag></th>'
+        else if (sel =='4시간')
+            ac_str+='<th colspan="2" scope="row"><img src="/media/symbol/hour4_coupon.jpg" width="20%"><mytag class="ctype">'+sel+'</mytag></th>'
+        else if (sel =='10시간')
+            ac_str+='<th colspan="2" scope="row"><img src="/media/symbol/hour10_coupon.jpg" width="20%"><mytag class="ctype">'+sel+'</mytag></th>'
+        else if (sel =='1분')
+        ac_str+='<th colspan="2" scope="row"><img src="/media/symbol/min1_coupon2.jpg" width="20%"><mytag class="ctype">'+sel+'</mytag></th>'
+
+        if( $('#cp_privt').is(':checked') == true) ac_str+='<td><input class="mbcount form-control" type="number" value="1" onchange="total_price();" style="display:none;"></td>'
+        else ac_str+='<td><input class="mbcount form-control" type="number" value="1" min="1" onchange="total_price();"></td>'
+        //ac_str+='<td><input class="cpcount form-control" type="number" value="1" min="1" onchange="total_price();"></td>'
+        ac_str+='<td class="price"></td>'
+        ac_str+='<td><button onclick="$(this).parent().parent().remove();total_price();purchase_remove();">삭제</button></td>'
+        ac_str+='</tr>';
+
+        //ac.innerHTML = ac.innerHTML + ac_str;
+        $("#add_coupon").append(ac_str);
+       // console.log(ac.innerHTML);
+        total_price();
+        purchase_remove();
+    }
+
+    function purchase_remove(){
+
+        $("#id_coupon_select").val("0").prop("selected", true);
+    }
+
+
+    function total_price() {
+        sel = document.getElementsByClassName('ctype');
+        mbc = document.getElementsByClassName('mbcount');
+        //cpc = document.getElementsByClassName('cpcount');
+        price = document.getElementsByClassName('price');
+        total = 0;
+        for (var i=0; i<mbc.length; i++) {
+            //sum = mbc[i].value * cpc[i].value
+            sum = mbc[i].value
+
+            if(sel[i].innerHTML=='1시간') sum = sum * 5500;
+            else if (sel[i].innerHTML=='4시간') sum = 4 * sum * 4950;
+            else if (sel[i].innerHTML=='10시간') sum = 10 * sum * 4400;
+            else if (sel[i].innerHTML=='1분') sum = sum * 100;
+            sum = Math.abs(sum)
+            price[i].innerHTML = sum.toLocaleString('ko-KR');
+            total = total + sum;
+        }
+        document.getElementById("total_price").innerHTML = "<strong>"+total.toLocaleString('ko-KR')+"</strong>";
+    }
+
+    function submitchk() {
+    }
+
+   function submitPurchase() {
+        var sel = document.getElementsByClassName('ctype');
+        var mbc = document.getElementsByClassName('mbcount');
+        var cpc = document.getElementsByClassName('cpcount');
+        var price = document.getElementsByClassName('price');
+        var purchaseList = new Array() ;
+        orderID = makecode(21);
+        for (var i=0; i<sel.length; i++) {
+            var data = new Object() ;
+            //data.amount = sel[i].innerHTML;
+            if(sel[i].innerHTML=='1시간') data.amount = 60;
+            else if (sel[i].innerHTML=='4시간') data.amount = 240;
+            else if (sel[i].innerHTML=='10시간') data.amount = 600;
+            else if(sel[i].innerHTML=='1분') data.amount = 1;              
+            data.userCount = mbc[i].value;
+            //data.couponCount = cpc[i].value;
+            data.couponCount = 1;
+            data.total_charge = price[i].innerHTML
+            purchaseList.push(data) ;
+        }
+
+        // String 형태로 변환
+        var jsonData = JSON.stringify(purchaseList) ;
+        console.log(jsonData);
+        var formData =new FormData(document.getElementById("sentform"));
+        formData.append('purchase_list',jsonData);
+        formData.append('total_price',String(total));  //total.toString());
+        formData.append('orderID', orderID);
+        formData.append('buyWhere', $('#buy_where').val())
+
+        $.ajax({
+            contentType : false,
+            processData : false,
+            data : formData,
+            url : "/interviews/purchase/request/",
+            type : 'POST',
+            success: function (data) {
+                if ( '{{ user.is_superuser }}' != 'True')
+                    payment_toss();
+                else window.location.href="/interviews/purchase/ownlist/";
+            },
+            error: function (xhr, status) {
+                alert(xhr + " : " + status);
+            }
+        });
+        return false;
+   }
+</script>
+
+{% endblock %}
+{% block link_area %}
+{% endblock %}

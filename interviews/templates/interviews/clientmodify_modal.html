@@ -1,0 +1,54 @@
+{% load crispy_forms_tags %}
+<div id="signup-modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-body">
+                <div class="text-center mt-2">
+                    <a href="index.html" class="text-success">
+                        <span><img src="/media/symbol/tebah_symbol02.png" alt="" height="54"></span>
+                    </a>
+                </div>
+
+                <form class="pl-3 pr-3" action="" method="post">
+                    {% csrf_token %}
+                    <!--div>
+                    {{ form | crispy }}
+                   </div-->
+                    <div class="form-group mb-1">
+                        <label for="id_name">Name</label>
+                        <input class="form-control" type="text" name="name" id="id_name" required="" value="{{ client.name }}">
+                    </div>
+
+                    <div class="form-group mb-1">
+                        <label for="id_mail">Email address</label>
+                        <input class="form-control" type="text" name="mail" id="id_mail" required="" value="{{ client.mail }}">
+                    </div>
+                    <div class="form-group mb-1">
+                        <label for="id_phone">Telephone</label>
+                        <input type="text" name="phone" id="id_phone" class="form-control" data-toggle="input-mask" data-mask-format="000-0000-0000" value="{{ client.phone }}">
+                        <span class="font-13 text-muted">e.g "xxx-xxxx-xxxx"</span>
+                    </div>
+                    <div class="form-group mb-1">
+                        <label for="id_comment">고객노트</label>
+                        <!--input class="form-control" type="text" id="id_comment" required="" value="{{ client.comment }}"-->
+                        <textarea name="comment" cols="40" rows="10" maxlength="1000" class="textarea form-control form-control" required id="id_comment" >
+                            {{ client.comment }}
+                        </textarea>
+                    </div>
+                    <div style="display:none;">
+                        <input class="form-control" type="text" name="pk" id="id_pk" required="" value="{{ client.pk }}">
+                    </div>
+
+                    <div class="form-group text-center">
+                        <button class="btn btn-primary" type="submit">고객정보수정</button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+ <!--div id="summernote-basic"></div-->

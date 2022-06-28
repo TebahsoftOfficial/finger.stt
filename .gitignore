@@ -127,3 +127,20 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+#custom setting
+db.sqlite3
+settings.py
+.settings.py
+fingerai/settings.py
+.idea/
+migrations/
+kobart_summary/
+_media/interviews/
+staticfiles/
+.test_django.crt
+.test_django.csr
+.test_django.key
+test_django.crt
+test_django.csr
+test_django.key

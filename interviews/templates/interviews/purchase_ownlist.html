@@ -1,0 +1,142 @@
+{% extends 'interviews/interviews_base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% load mathfilters %}
+{% block css_content %}
+  <link href="{% static 'interviews/bootstrap/assets/css/vendor/select.bootstrap5.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'interviews/bootstrap/assets/css/vendor/dataTables.bootstrap5.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'interviews/bootstrap/assets/css/vendor/responsive.bootstrap5.css' %}" rel="stylesheet" type="text/css" />
+{% endblock %}
+
+
+{% block subnav_area %}
+{% endblock %}
+
+{% block main_area %}
+<p class="h3"> 구매 내역 </p>
+
+{% if ownlist %}
+<table id="scroll-horizontal-datatable" class="table nowrap w-100" data-order='[1,"desc"]'>
+    <thead>
+        <tr>
+            <!--th>구매유형</th-->
+            <!--th>쿠폰수량</th-->
+            <th>충전시간</th>
+            <th>생성일자</th>
+            <th>유효기간</th>
+            {%if user.is_superuser %}
+                <th>사용자수</th>            
+            {% endif %}
+            <th>쿠폰코드</th>
+            <th>상태</th>
+        </tr>
+    </thead>
+
+    <tbody>
+    {% for coupon in ownlist %}
+ 
+            <tr>
+                <!--td>{{ coupon.type }}</td-->
+                <!--td>{{ coupon.coupon_count }}</td-->
+                <td>{{ coupon.amount }}분</td>
+                <td>{{ coupon.created_at|date:"y-m-d"}}{{ coupon.createed_at|time:"H:i:s" }}</td>
+                <td>{{ coupon.expire_at|date:"y-m-d"}}{{ coupon.expire_at|time:"H:i:s" }}</td>
+
+                {%if user.is_superuser %}
+                    <td>{{ coupon.used_count }}/{{ coupon.user_count }}</td>                
+                    <td>{{ coupon.code }}&nbsp&nbsp<i class="dripicons-copy me-2" onclick='textcopy("{{ coupon.code }}");'></i></td>
+                {% else %}
+                    <td>{{ coupon.code|slice:"0:9" }}~&nbsp&nbsp</td>
+                {% endif %}
+             
+                <td>
+                    {% if coupon.usable == 'true' %}                    
+                    <button type="button" class="btn btn-secondary my-0 px-1 py-0 dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="font-size:small;">
+                        결제취소</button>     
+                        
+                        <div class="dropdown-menu" >
+                            <form class="px-4 py-3" id="id_cancelForm" method="post" enctype="multipart/form-data" name="cancelForm" >
+                            {% csrf_token %}
+                                <div style="display:none;">
+                                    <input type="text" id="id_canel_coupon" class="form-control" name="cancel_coupon" value="{{coupon.code}}">
+                                </div>                            
+                                <div class="mb-3" >
+                                    <label for="id_cancel_reason" class="form-label">취소사유</label>
+                                    <select class="form-select" id="id_cancel_reason" name="cancel_reason">
+                                        <option selected>단순 변심</option>
+                                        <option>더 좋은 서비스로 변경</option>
+                                        <option>필요한 기능이 없음</option>
+                                        <option>가격이 부담스러움</option>
+                                    </select>
+                                </div>
+                                <div class="row"><button id="button1" class="btn btn-info rounded-pill" style="margin-top: 34px; font-size:small; padding:3" type="submit" >
+                                <i class="mdi mdi-wrench"></i>결제취소</button></div>'
+                            </form>
+                        </div>   
+                    {% elif coupon.usable == 'inUse' %}                                           
+                        사용중
+                    {% elif coupon.usable == 'cancel' %}                                           
+                        결제취소완료                       
+                    {% endif %}    
+                </td>
+            </tr>
+     
+    {% empty %}
+        <tr>No articles yet.</tr>
+    {% endfor %}
+    {% if ownlist|length < 4 %}  
+        <tr></tr>
+        <tr></tr>
+        <tr></tr>
+        <tr></tr>
+    {% endif %} 
+    </tbody>
+</table>
+{% else %}
+쿠폰 발급 내역이 없습니다.
+{% endif %}
+
+<br>
+
+
+{% endblock %}
+
+{% block link_area %}
+{% endblock %}
+
+{% block extra_javascript %}
+<script>
+
+
+$(document).ready(function() {
+    $('#scroll-horizontal-datatable').dataTable({
+    "scrollX":200, 
+    "pageLength": 50
+    });
+} );
+
+
+function textcopy(p1) {
+  const t = document.createElement("textarea");
+  document.body.appendChild(t);
+  t.value = p1;
+  t.select();
+  document.execCommand('copy');
+  alert("코드가 클립보드에 복사되었습니다.\n다른 사용자에게 쿠폰번호를 알려주면 쿠폰을 등록할 수 있습니다.\n도용되지 않도록 주의하시기 바랍니다.");
+  document.body.removeChild(t);
+
+}
+</script>
+
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/dropzone.min.js' %}"></script>
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/dataTables.select.min.js' %}"></script>
+
+
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/dataTables.bootstrap5.js' %}"></script>
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/dataTables.responsive.min.js' %}"></script>
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/responsive.bootstrap5.min.js' %}"></script>
+
+<!-- Datatable Init js -->
+<script src="{% static 'interviews/bootstrap/assets/js/pages/demo.datatable-init.js' %}"></script>
+{% endblock %}

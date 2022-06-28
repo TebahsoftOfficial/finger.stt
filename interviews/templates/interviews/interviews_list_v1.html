@@ -1,0 +1,182 @@
+{% load static %}
+{% load socialaccount %}
+
+<html lang="en">
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap CSS -->
+  <!--link rel="stylesheet" href="{% static 'interviews/bootstrap/bootstrap.min.css' %}" media="screen"/-->
+  <link rel="stylesheet" href="{% static 'interviews/bootstrap/assets/css/app.min.css' %}" media="screen"/>
+    <script src="https://kit.fontawesome.com/726bbd6862.js" crossorigin="anonymous"></script>
+
+  <title>상담목록</title>
+
+</head>
+            <!--a class="navbar-brand" href="/"><img src="/media/symbol/tebah_symbol01.png" width="30" height="33">
+              <img src="/media/symbol/tebah_symbol03.png" width="70" height="20"-->
+<body>
+{% if user.is_authenticated %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/"><img src="/media/symbol/tebah_symbol01.png" width="30" height="33">
+      <img src="/media/symbol/tebah_symbol03.png" width="70" height="20">
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNavDropdown">
+
+      <ul class="navbar-nav">
+        <li class="nav-item active">
+          <a class="nav-link" href="/interviews/create/">상담작성</a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" href="/accounts/logout/">로그아웃</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+    {% block main_area %}
+
+    <div class="container my-3">
+        <div class="row">
+            <div class="col-md-8 col-lg-9" id="main-area">
+                {% if interviews_list.exists %}
+                    <table class="table table-hover">
+                      <thead>
+                        <tr>
+                          <th scope="col"><center>대화일시</center></th>
+                          <th scope="col"><center>대화제목</center></th>
+                          <th scope="col"><center>삭제</center></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+
+                    {% for iv in interviews_list %}
+                        {% if user.username == iv.author.username %}
+                        <tr>
+                          <!--th scope="row">{{ iv.pk }}</th-->
+                          <th scope="row"><center>{{ iv.created_at }}</center></th>
+                          <td><center><a href="{{ iv.get_absolute_url }}" >{{ iv.title }}</a></center></td>
+                          <td>
+                              <a href="{% url 'interview_delete' iv.pk %}" onclick="return confirm('정말 삭제하시겠습니까?')">
+                                  <i class="dripicons-trash"></i></a>
+                          </td>
+                          <!--th scope="row"><center>{{ iv.author.username }}</center></th-->
+                        </tr>
+                        {% endif %}
+                    {% endfor %}
+                      </tbody>
+                    </table>
+
+                {% else %}
+                    <br>
+                    <h3>아직 게시물이 없습니다.</h3>
+                {% endif %}
+                <div class="row">
+                    <div class="col-4" >
+                    <a href="/interviews/create/" class="btn btn-primary btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>상담작성</a>
+                    </div>
+                    <div class="col-4">
+                    </div>
+                    <div class="col-4">
+                        <a href="/accounts/logout/" class="btn btn-primary btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>로그아웃</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 col-lg-3">
+                <!-- Search Widget -->
+                <div class="card my-4">
+                    <h5 class="card-header">Search</h5>
+                    <div class="card-body">
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Search for..." id="search-input">
+                            <span class="input-group-btn">
+                                    <button class="btn btn-secondary" type="button" onclick="searchInterviews();">Go!</button>
+                             </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categories Widget -->
+                <div class="card my-4" id="clients_list-card">
+                    <h5 class="card-header">고객별 상담분류</h5>
+                    <div class="card-body">
+                        <div class="row">
+                            <ul>
+                                {% for client in clients_list %}
+                                    <li>
+                                        <a href="{{ client.get_absolute_url }}">{{ client }} ({{ client.interviews_set.count }})</a>
+                                    </li>
+                                {% endfor %}
+                                <li>
+                                    <a href="/interviews/client/0/">미분류 ({{ client_notknown }})</a>
+                                </li>
+                            </ul>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    {% endblock %}
+{% else %}
+    <!--div class="d-grid gap-2 col-4 mx-auto mt-3" -->
+    <div>
+        <center>
+        <img src="/media/symbol/tebah_symbol02.png" width="200" height="220">
+
+        </center>
+    </div>
+
+    <!--div class="d-grid gap-2 col-3 mx-auto " -->
+    <div>
+<br>
+        <center>
+            <a href="{% provider_login_url 'kakao' %}" id="kakao_login">
+       <img src="/media/symbol/kakao_login_medium_narrow.png" >
+                 </a>
+        </center>
+
+    </div>
+
+
+{% endif %}
+<script>
+    function searchInterviews(){
+        let searchValue = document.getElementById('search-input').value.trim();
+        if (searchValue.length > 1){
+            location.href="/interviews/search/" + searchValue + "/";
+        }
+        else{
+            alert('검색어('+ searchValue +')가 너무 짧습니다.');
+        }
+    };
+
+    document.getElementById('search-input').addEventListener('keyup', function(event){
+        if(event.key === 'Enter'){
+            searchInterviews();
+        }
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js" integrity="sha384-W8fXfP3gkOKtndU4JGtKDvXbO53Wy8SZCQHczT5FMiiqmQfUpWbYdTil/SxwZgAN" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.min.js" integrity="sha384-skAcpIdS7UcVUC05LJ9Dxay8AXcDYfBJqt1CJ85S/CFujBsIzCIv+l9liuYLaMQ/" crossorigin="anonymous"></script>
+</body>
+
+</html>
+
+
+

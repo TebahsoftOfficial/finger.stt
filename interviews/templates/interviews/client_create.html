@@ -1,0 +1,113 @@
+{% extends 'interviews/interviews_base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block nav_area %}
+{% endblock %}
+
+{% block link_area %}
+{% endblock %}
+
+{% block widget_area %}
+{% endblock %}
+
+{% block css_content %}
+<link href="{% static 'interviews/bootstrap/assets/css/vendor/quill.core.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'interviews/bootstrap/assets/css/vendor/quill.snow.css' %}" rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block subnav_area %}
+{% endblock %}
+
+
+{% block main_area %}
+<div class="row mb-2">
+  <div class="col-4">
+    <a href="javascript:history.back();"><button class="btn btn-info rounded-pill" ><i class="mdi mdi-skip-previous me-1"></i>이전화면</button></a>
+  </div>
+</div>
+
+<div class="col-6 alert alert-success" role="alert" id="res-alert" style="display:none;">
+    <i class="dripicons-checkmark me-2"></i>  <strong> 동일한 고객이 존재합니다 !!! 기존 고객명에 등록하고나 다른이름으로 등록하기바랍니다.</strong>
+</div>
+
+<form method="post" enctype="multipart/form-data" onsubmit="return checkClient();">
+{% csrf_token %}
+    <!--div>
+    {{ form | crispy }}
+    </div-->
+  <div class="row mb-2">
+    <div class="col-4" >
+        <label for="id_name" class="form-label"><i class="mdi mdi-face"></i>&nbsp고객명</label>
+        <input class="form-control" type="text" name="name" id="id_name" >
+    </div>
+    <div class="col-4">
+        <label for="id_mail" class="form-label"><i class="mdi mdi-email"></i>&nbsp이메일주소</label>
+        <input class="form-control" type="text" name="mail" id="id_mail"  >
+    </div>
+    <div class="col-4">
+        <label for="id_phone" class="form-label"><i class="mdi mdi-card-account-phone"></i>&nbsp연락처</label>
+        <input type="text" name="phone" id="id_phone" class="form-control" data-toggle="input-mask" data-mask-format="000-0000-0000" >
+    </div>
+  </div>
+  <div class="row mb-2">
+    <div class="col-4" >
+        <label for="id_password" class="form-label"><i class="mdi mdi-form-textbox-password"></i>&nbsp폴더암호</label>
+        <input type="password" class="form-control" id="id_password" name="password">
+    </div>
+  </div>
+  <div class="row mb-2">
+    <div class="col-12">
+    <label for="id_comment" class="form-label">고객노트</label>
+    <!--input class="form-control" type="text" id="id_comment" required="" value="{{ client.comment }}"-->
+        <div id="snow-editor" style="height: 300px;" >
+
+       </div>
+        <textarea style="display:none;" name="comment" cols="40" rows="5" maxlength="1000" class="textarea form-control" id="id_comment" >
+
+        </textarea>
+
+    </div>
+  </div>
+  <div class="row mb-2">
+      <div class="col-4">
+        <button type="submit" class="btn btn-info rounded-pill" onClick="htrans();"><i class="mdi mdi-creation me-1"></i> <span>신규생성</span> </button>
+      </div>
+  </div>
+</form>
+
+{% endblock %}
+
+{% block extra_javascript %}
+<!-- quill js -->
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/quill.min.js' %}"></script>
+<!-- quill Init js-->
+<script src="{% static 'interviews/bootstrap/assets/js/pages/demo.quilljs.js' %}"></script>
+
+<script>
+function checkClient() {
+    var ret = 1;
+    iname = document.getElementById("id_name").value;
+    console.log("Info::"+iname);
+    {% for client in clients_list %}
+        console.log("{{ client.name }}");
+        if( "{{ client.name }}" == iname ) {
+            //document.getElementById("res-alert").setAttribute("style","display");
+            alert("동일한 고객이 존재합니다 !!! 다른이름으로 등록하기바랍니다.");
+            history.back();
+            ret = 0;
+            return false;
+        }
+    {% endfor %}
+    if (ret == 0) {
+        return false;
+    }
+}
+
+function htrans() {
+    sn = document.querySelector('.ql-editor');
+    cf=document.getElementById('id_comment');
+    cf.innerHTML=sn.innerHTML;
+};
+</script>
+{% endblock %}

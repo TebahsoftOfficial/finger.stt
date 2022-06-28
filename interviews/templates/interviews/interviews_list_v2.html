@@ -1,0 +1,78 @@
+{% extends 'interviews/interviews_base.html' %}
+{% block load_area %}
+{% load socialaccount %}
+{% endblock %}
+
+
+    {% block head_title %}상담목록{% endblock %}
+    {% block nav_area %}
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/"><img src="/media/symbol/tebah_symbol01.png" width="30" height="33">
+          <img src="/media/symbol/tebah_symbol03.png" width="70" height="20">
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNavDropdown">
+
+          <ul class="navbar-nav">
+            <li class="nav-item active">
+              <a class="nav-link" href="/interviews/create/">상담작성</a>
+            </li>
+            <li class="nav-item active">
+              <a class="nav-link" href="/accounts/logout/">로그아웃</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    {% endblock %}
+
+    {% if interviews_list.exists %}
+        {% block main_area %}
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th scope="col"><center>대화일시</center></th>
+                  <th scope="col"><center>대화제목</center></th>
+                  <th scope="col"><center>삭제</center></th>
+                </tr>
+              </thead>
+              <tbody>
+            {% for iv in interviews_list %}
+                {% if user.username == iv.author.username %}
+                <tr>
+                  <th scope="row"><center>{{ iv.created_at }}</center></th>
+                  <td><center><a href="{{ iv.get_absolute_url }}" >{{ iv.title }}</a></center></td>
+                  <td>
+                      <a href="{% url 'interview_delete' iv.pk %}" onclick="return confirm('정말 삭제하시겠습니까?')">
+                          <i class="dripicons-trash" ></i></a>
+                  </td>
+                  <!--th scope="row"><center>{{ iv.author.username }}</center></th-->
+                </tr>
+                {% endif %}
+            {% endfor %}
+              </tbody>
+            </table>
+        {% endblock %}
+
+
+    {% else %}
+        <br>
+        <h3>아직 게시물이 없습니다.</h3>
+    {% endif %}
+    {% block link_area %}
+        <div class="row">
+            <div class="col-4" >
+            <a href="/interviews/create/" class="btn btn-primary btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>상담작성</a>
+            </div>
+            <div class="col-4">
+            </div>
+            <div class="col-4">
+                <a href="/accounts/logout/" class="btn btn-primary btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>로그아웃</a>
+            </div>
+        </div>
+    {% endblock %}

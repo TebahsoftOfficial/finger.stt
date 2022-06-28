@@ -1,0 +1,542 @@
+{% extends 'interviews/interviews_base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block load_area %}
+{% load socialaccount %}
+{% load mathfilters %}
+{% endblock %}
+
+
+{% block css_content %}
+
+    <link href="{% static 'interviews/bootstrap/assets/css/vendor/select.bootstrap5.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'interviews/bootstrap/assets/css/vendor/dataTables.bootstrap5.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'interviews/bootstrap/assets/css/vendor/responsive.bootstrap5.css' %}" rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block head_title %}상담목록{% endblock %}
+
+{% block head_content %}
+
+{% endblock %}
+
+{% block subnav_area %}
+{% endblock %}
+
+
+{% if interviews_list.exists %}
+    {% block main_area %}
+
+	<!-- inserting these scripts at the end to be able to use all the elements in the DOM -->
+
+    <div class="row mb-2">
+
+        <div class="col-12">
+            &nbsp
+            <img id="rec_img" src="/media/symbol/voice_record.png" data-bs-target="#recdrop" aria-expanded="false" aria-controls="recdrop" style="width: 11%; height: auto; ">
+            <!--img src="/media/symbol/voice_record.png" style="width: 15%; height: auto; opacity:20%; "-->
+
+           &nbsp<a href="/interviews/create/norm/"><img src="/media/symbol/file_upload2.png" style="width: 11%; height: auto;"></a>
+
+           &nbsp&nbsp<img class="dropdown-toggle" src="/media/symbol/share_code.png" style="width: 11%; height: auto;" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+
+            {% if user.username == 'pg_guest' %}
+                &nbsp<a href="/interviews/purchase/request/"><img src="/media/symbol/time_refill.png" style="width: 11%; height: auto;"></a>
+            {% else %}
+                &nbsp<a href="https://smartstore.naver.com/finger_ai/category/ALL?cp=1" target="_blank"><img src="/media/symbol/time_refill.png" style="width: 11%; height: auto;"></a>
+            {% endif %}
+            <!--img src="/media/symbol/voice_record.png" class="dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="width: 15%; height: auto; ">
+            <div class="dropdown-menu" style="max-width: 28em;" id="recdrop"-->
+            <div class="collapse" id="recdrop" style="margin:3; padding:2;">
+                <div style="margin:3; padding:2;">
+                <!--label>대화제목:</label>
+                <input type="text" id="rec_title"-->
+                <select id="encodingTypeSelect" style="display:none;">
+                  <option value="wav">Waveform Audio (.wav)</option>
+                  <option value="mp3">MP3 (MPEG-1 Audio Layer III) (.mp3)</option>
+                  <option value="ogg" selected >Ogg Vorbis (.ogg)</option>
+                </select>
+                </div>
+
+                <div class="alert alert-dark bg-dark text-white border-0 mb-2 px-2 py-2 col-lg-5 col-md-4" role="alert" >
+                    <strong>* 녹음시 주의사항 <br></strong>
+                        - 주변 소음 제거, 마이크와 가까운 거리<br>
+                        - 정확한 발음, 여러명의 동시 발언 자제<br>
+                        주의사항을 지킬 수록 서비스 품질이 향상됩니다.
+
+                </div>
+
+                <div id="controls" style="margin:3; padding:2;">
+                    <div id="user_name" style="display:none;">{{ user.username }}</div>
+
+                    <div>
+                        <span><canvas class="visualizer" height="30px" width="180px"></canvas></span>
+
+                    </div>
+                    <div>
+
+                        <!--button class="btn btn-light" id="recordButton"> <i class="fas fa-record-vinyl"></i></button-->
+                        <button class="btn btn-light" id="stopButton" disabled><i class="fas fa-stop"></i></button>
+                        <button class="btn btn-light" id="pauseButton" disabled style="margin:3; padding:2;" pause="false">Pause</button>
+                        <button class="btn btn-light" id="rec_submit" disabled style="margin:3; padding:2;">저장</button>
+                        <button class="btn btn-light" id="time_view" disabled style="margin:3; padding:2;">0'00"</button>
+
+                    </div>
+
+
+                </div>
+                <!--div id="formats"></div>
+                <pre id="log"></pre>
+                <ol-- id="recordingsList"></ol-->
+                <audio id="aid"></audio>
+
+            </div>
+
+            <div class="collapse show" id="intv_form" style="display:none;">
+                <form method="post" enctype="multipart/form-data" id="anal_form" onsubmit="return recSubmit();">
+                    {% csrf_token %}
+                    <!--div>
+                    {{ form | crispy }}
+                   </div-->
+
+                    <div class="row mb-2">
+                      <div class="col">
+                        <label for="id_title" class="form-label">상담 제목</label>
+                        <input type="text" class="form-control" name="title" id="id_title" placeholder="상담 제목을 입력하세요">
+                      </div>
+                    </div>
+
+
+                    <div class="row mb-2">
+                      <div class="col">
+                        <label for="id_file_upload" class="form-label">상담 파일</label>
+                        <input type="file" class="form-control" name="file_upload" id="id_file_upload" placeholder="상담파일 입력" >
+                      </div>
+                    </div>
+
+
+
+                    <div class="alert alert-warning" role="alert" style="display:none" id="timealert">
+                        <i class="dripicons-warning me-2"></i>  <strong>시간부족</strong> <mytag id="alertmsg"></mytag>
+                    </div>
+
+                    <div class="alert alert-info" role="alert" style="display:none" id="timeinfo">
+                        <div id="rec_duration" style="display:none;"></div>
+                        <i class="dripicons-information me-2"></i>  <mytag id="infomsg"></mytag>
+                    </div>
+
+
+
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="id_nums_speaker" class="form-label">화자수</label>
+                            <input type="number" class="form-control" name="nums_speaker" id="id_nums_speaker" value="2">
+                        </div>
+                        <div class="col">
+                            <label for="id_stt_lang" class="form-label">언어선택</label>
+                            <select class="form-select mb-3" name="stt_lang" id="id_stt_lang">
+                                <option selected value="ko-KR">한국어</option>
+                                <option value="en-US">엉어</option>
+                                <!--option value="enko">한+영</option>
+                                <option value="ja">일본어</option-->
+                            </select>
+                        </div>
+                        <div id="div_id_client_name" class="col">
+                            <label for="id_client_name" class="form-label">고객선택</label>
+                            &nbsp<!--a href="/interviews/add/client/ivcreate/" style="margin-top: 8;padding-top: 8px;"><i class="uil-folder-medical" ></i>&nbsp고객추가</a-->
+                            <!--input type="text" class="form-control" name="client_name" id="id_client_name" placeholder="고객이름"-->
+                            <select class="form-select mb-3" name="client_name" id="id_client_name">
+                                <!--option selected>고객선택</option-->
+                                <option selected value="고객미정">고객미정</option>
+                                {% for client in clients_list %}
+                                    {% if client.name != "고객미정" and user.username == client.counselor.username %}
+                                        <option value="{{ client.name }}">{{ client.name }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="agreement" class="col-12 alert alert-success" role="alert">
+                        <center><strong>녹음파일 활용 동의 및 서약서</strong></center><br>
+                        1. Finger.ai는 AI에 의해서 자동으로 녹취된 내용을 한글로 바꾸어 드리는 서비스로서, Finger.ai를 운영하고 있는 테바소프트(주)는 고객이 업로드한 파일에
+                        대하여 고객 동의 없이는 어떤한 경우에도 열람하거나, 청취하지 않음을 서약합니다.<br><br>
+                        2. 고객님이 Finger.ai에 업로드하시는 녹음파일은 불법적으로 녹취된 파일이 아니어야 하며, 녹음파일에 대한 불법성 여부에 대한 책임은 사용자 개인이 책임져야 합니다.
+                    </div>
+
+                    <button id="start_anal" class="btn btn-primary" type="submit" >
+                        <!--span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span-->
+                        동의후 등록
+                    </button>
+                </form>
+                <button style="display:none;" id="size_chk" onclick="audio_duration();">임시</button>
+             </div>
+
+
+            <div class="dropdown-menu" >
+                <form class="px-4 py-3" id="id_cresForm" method="post" enctype="multipart/form-data" name="cresForm" >
+                {% csrf_token %}
+                    <div>
+                        <label for="id_code_regist" class="form-label">공유코드입력</label>
+                        <input type="text" class="form-control" style="margin-top: 1px; padding:2" name="code_regist" id="id_code_regist" >
+                    </div>
+                    <div class="row"><button id="button1" class="btn btn-info rounded-pill" style="margin-top: 34px; font-size:small; padding:3" type="submit" >
+                    <i class="mdi mdi-wrench"></i>대화등록</button></div>'
+                </form>
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+    {% if pw_result == 'fail' %}
+    <div class="col-12 alert alert-success" role="alert">
+        <i class="dripicons-checkmark me-2"></i>  <strong>암호입력오류!</strong>
+    </div>
+    {% elif pw_result == 'expiredcode' %}
+    <div class="col-12 alert alert-success" role="alert">
+        <i class="dripicons-checkmark me-2"></i>  <strong>대화코드 유효기간 만료!!</strong>
+    </div>
+    {% elif pw_result == 'misspell' %}
+    <div class="col-12 alert alert-success" role="alert">
+        <i class="dripicons-checkmark me-2"></i>  <strong>대화코드 입력 오류!!</strong>
+    </div>
+    {% elif pw_result == 'recfail' %}
+    <div class="col-12 alert alert-success" role="alert">
+        <i class="dripicons-checkmark me-2"></i>  <strong>녹음파일 내용이 분석에 적합하지 않습니다!</strong>
+    </div>
+    {% elif pw_result == 'notime' %}
+    <div class="col-12 alert alert-success" role="alert">
+        <i class="dripicons-checkmark me-2"></i>  <strong>서비스 시간이 부족합니다.</strong>
+    </div>
+
+    {% endif %}
+    <a href="/interviews/add/client/cltlist/" ><i class="uil-folder-medical" ></i>&nbsp고객추가</a>
+<br>
+
+<table id="basic-datatable" class="table nowrap w-100" data-order='[0,"asc"]'>
+
+        <thead>
+            <tr >
+                <th>고객이름</th>
+                <th style="text-align: right;">대화건수(건)</th>
+                <th><center>수정</center></th>
+                <th><center>삭제</center></th>
+            </tr>
+        </thead>
+
+
+        <tbody>
+
+        {% for client in clients_list %}
+            {% if client.name != "고객미정" and user.username == client.counselor.username %}
+            <tr>
+
+                <td>
+                    {% if client.password != '' %}
+                    <i class="dripicons-lock" ></i><a href="{% url 'client_pwcheck' client.pk %}">&nbsp{{ client.name }}</a>
+                    {% else %}
+                    <i class="dripicons-user" ></i><a href="{{ client.get_absolute_url }}">&nbsp{{ client.name }}</a>
+                    {% endif %}
+                </td>
+                <td style="text-align: right;">
+                    {{ client.interviews_set.count }}
+                </td>
+                <td>
+                    <center><a href="{% url 'client_modify' client.pk %}" target="_blank"><i class="uil-pen" ></i></a></center>
+                </td>
+                <td>
+                    <center><a href="{% url 'client_delete' client.pk %}" onclick="return confirm('정말 삭제하시겠습니까?')">
+                      <i class="dripicons-trash" ></i></a></center>
+                </td>
+
+            </tr>
+            {% endif %}
+        {% endfor %}
+
+        </tbody>
+    </table>
+<br>
+    <table id="scroll-horizontal-datatable" class="table nowrap w-100" data-order='[2,"desc"]' >
+        <thead>
+            <tr>
+                <th style="padding-left:10;">대화제목</th>
+                <th style="text-align: right;">상담시간(분)</th>
+                <th><center>날짜</center></th>
+                <th><center>삭제</center></th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for iv in client_unknown %}
+            {% if user.username == iv.author.mid.username and iv.delete_flag != "true" %}
+            <tr>
+                <td>
+                    <i class="dripicons-document" ></i> <a href="{{ iv.get_absolute_url }}" >{{ iv.title }}</a>
+                </td>
+                <td style="text-align: right; ">{{ iv.duration }}</td>
+                <td>
+
+                    <center><span class="badge bg-secondary">{{ iv.created_at|date:"Y-m-d" }}</span></center>
+                </td>
+                <td>
+                    <center><a href="{% url 'interview_delete' iv.pk %}" onclick="return confirm('정말 삭제하시겠습니까?')">
+                    <i class="dripicons-trash" ></i></a></center>
+                </td>
+
+            </tr>
+            {% endif %}
+            {% empty %}
+                <tr>No articles yet.</tr>
+            {% endfor %}
+
+        </tbody>
+    </table>
+
+    <form class="px-4 py-3" id="id_cgenForm" method="post" enctype="multipart/form-data" name="cgenForm" style="display:none;">
+        {% csrf_token %}
+        <!--input type="text" class="form-control" name="code_generate" id="id_code_generate" style="display:none;"-->
+        <input type="text" class="form-control" name="interview_id" id="id_interview_id">
+        <button class="btn btn-info rounded-pill" type="submit" id="buttonx"></button>
+    </form>
+    {% endblock %}
+{% else %}
+    <br>
+    <h3>아직 게시물이 없습니다.</h3>
+{% endif %}
+{% block link_area %}
+    <div class="row mt-2">
+        <div class="col-4" >
+        <a href="/interviews/create/norm/" class="btn btn-light" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>
+            <i class="dripicons-document-edit"></i><span><strong>&nbsp상담작성</strong></span></a>
+        </div>
+        <div class="col-4">
+        </div>
+        <div class="col-4">
+            <a href="/accounts/logout/" class="btn btn-light" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>
+                <i class="mdi mdi-logout"></i><span><strong>&nbsp로그아웃</strong></span></a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_javascript %}
+<script>
+window.onload = function() {
+    $('#scroll-horizontal-datatable').dataTable({
+        "scrollX":200,
+        "pageLength": 50,
+        "columns": [
+          null,
+         {"type":"num-fmt", "render": function(data, type, row, meta) { return data+"'"}},
+         {"type":"datetime"},
+         null
+        ]
+    });
+
+    $('#basic-datatable').dataTable();
+
+    submit_code_regist();
+//   submit_generate_code();
+    {% if user.is_authenticated %}
+        if (location.protocol != "https:") {
+           location.href = location.href.replace(/^http:/, 'https:');
+           //location.href.replace(/^http:/, 'https:');
+           console.log(location.href)
+        }
+    {% endif %}
+}
+
+var popupid;
+
+window.onunload = function () {
+    if(popupid!=null) popupid.close();
+}
+
+
+function getCookie(name) {
+  var cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+      var cookies = document.cookie.split(';');
+      for (var i = 0; i < cookies.length; i++) {
+          var cookie = cookies[i].trim();
+          // Does this cookie string begin with the name we want?
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+          }
+      }
+  }
+  return cookieValue;
+}
+var csrftoken = getCookie('csrftoken');
+
+function csrfSafeMethod(method) {
+  // these HTTP methods do not require CSRF protection
+  return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+
+$.ajaxSetup({
+  beforeSend: function(xhr, settings) {
+      if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+          xhr.setRequestHeader("X-CSRFToken", csrftoken);
+      }
+  }
+});
+
+function generate_code(intv_id) {
+
+    cds = makecode(8);
+
+    var formData1 =new FormData(document.getElementById("id_cgenForm"));
+    formData1.append('code_generate',cds);
+    formData1.append('interview_id',intv_id);
+    textcopy(cds);
+    $.ajax({
+        contentType : false,
+        processData : false,
+        data : formData1,
+        url : "/interviews/generate/code/",
+        type : 'POST',
+        success: function (data) {
+        // window.location.replace("/interviews/");
+        },
+        error: function (xhr, status) {
+            alert(xhr + " : " + status);
+        }
+    });
+}
+
+function makecode(length) {
+   var result           = '';
+   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+   var charactersLength = characters.length;
+   for ( var i = 0; i < length; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+   }
+   return result;
+}
+
+function textcopy(p1) {
+  const t = document.createElement("textarea");
+  document.body.appendChild(t);
+  t.value = p1;
+  t.select();
+  document.execCommand('copy');
+  alert("다른 사용자와 대화 공유용 코드\n공유코드에 입력하면 대화가 생성됩니다.\n\n클립보드 복사 : " + t.value +"\n\n유효기간 7일 이내에 코드를 등록하세요.");
+  document.body.removeChild(t);
+
+}
+
+function submit_generate_code() {
+  $("#id_cgenForm").submit(function(e){
+    //e.preventDefault();
+    cds = makecode(8);
+
+    var formData1 =new FormData(document.getElementById("id_cgenForm"));
+    formData1.append('code_generate',cds);
+    formData1.append('interview_id',document.getElementById("id_interview_id").value);
+    textcopy(cds);
+    $.ajax({
+        contentType : false,
+        processData : false,
+        data : formData1,
+        url : "/interviews/generate/code/",
+        type : 'POST',
+        success: function (data) {
+        // window.location.replace("/interviews/");
+        },
+        error: function (xhr, status) {
+            alert(xhr + " : " + status);
+        }
+    });
+
+  });
+};
+
+function submit_code_regist() {
+  $("#id_cresForm").submit(function(e){
+    //e.preventDefault();
+    var formData1 =new FormData(document.getElementById("id_cresForm"));
+    formData1.append('code_regist',document.getElementById("id_code_regist").value);
+
+    $.ajax({
+        contentType : false,
+        processData : false,
+        data : formData1,
+        url : "/interviews/regist/code/",
+        type : 'POST',
+        success: function (data) {
+          window.location.replace("/interviews/list/"+data);
+        },
+        error: function (xhr, status) {
+            alert(xhr + " : " + status);
+        }
+    });
+    return false;
+  });
+};
+
+function recSubmit() {
+    var obj1= document.getElementById("start_anal");
+    obj1.setAttribute('style','cursor:progress');
+    //obj1.setAttribute('onclick','javascript:void(0);');
+    obj1.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>분석중...';
+    obj1.setAttribute("disabled","true");
+    popupid = window.open("../../inaction/","_blank");
+    return true;
+};
+
+function audio_duration() {
+
+    agree = document.getElementById("start_anal")
+   {% with mtime=manager.max_time utime=manager.use_time ptime=manager.paid_time %}
+    {% with ctime=mtime|sub:utime %}
+
+        //ad = Math.ceil(Number($('#time_view').html())/60)
+        rec_time = Number($('#rec_duration').html());
+        console.log("Rec duration: " + rec_time);
+        ad = Math.ceil(rec_time/60)
+        rem = {{ ptime|add:ctime }}
+        if(ad > rem) {
+            agree.disabled = true;
+            amsg = document.getElementById("timealert")
+            info = document.getElementById("alertmsg")
+            imsg = document.getElementById("timeinfo")
+            amsg.setAttribute("style","display")
+            imsg.setAttribute("style","display:none")
+            info.innerHTML = "잔여시간보다 "+ (ad-rem) + "분 부족합니다.<br>(채팅상담으로 구매요청 바랍니다.)"
+            //alert("사용시간 초과! \n잔여시간보다 "+ (ad-rem) + "분 부족합니다..\n(채팅상담으로 구매요청)");
+        }
+        else {
+            agree.disabled = false;
+            amsg = document.getElementById("timealert")
+            info = document.getElementById("infomsg")
+            imsg = document.getElementById("timeinfo")
+            amsg.setAttribute("style","display:none")
+            imsg.setAttribute("style","display")
+            info.innerHTML = "사용시간이 "+ad+"분 차감됩니다."
+            //alert( "사용시간이 "+Math.ceil(audio.duration/60)+"분 차감됩니다.");
+
+        }
+    {% endwith %}
+  {% endwith %}
+}
+</script>
+
+<script src="{% static 'interviews/bootstrap/assets/js/audiorecord/audioapp.js' %}"></script>
+<script src="{% static 'interviews/bootstrap/assets/js/audiorecord/WebAudioRecorder.min.js' %}"></script>
+
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/dropzone.min.js' %}"></script>
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/dataTables.select.min.js' %}"></script>
+
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/dataTables.bootstrap5.js' %}"></script>
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/dataTables.responsive.min.js' %}"></script>
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/responsive.bootstrap5.min.js' %}"></script>
+
+<!-- Datatable Init js -->
+<script src="{% static 'interviews/bootstrap/assets/js/pages/demo.datatable-init.js' %}"></script>
+{% endblock %}
+

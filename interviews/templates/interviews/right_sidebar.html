@@ -1,0 +1,31 @@
+<!--div >
+  <a class="item" onclick="sidebarToggle();">
+    <i class="sidebar icon"></i>
+    Menu
+  </a>
+{% include 'interviews/right_sidebar.html' %}
+</div-->
+<div class="ui bottom visible sidebar ">
+    <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+      <div class="row my-2">
+        <div class="col-8">
+            <label for="id_comment">고객노트</label>
+        </div>
+        <div class="col-4">
+            <button class="btn btn-primary" type="submit">정보수정</button>
+        </div>
+      </div>
+      <div class="row mb-2">
+                <input style="display:none;" type="text" name="name" id="id_name" value={{ client_info.name }}>
+                <input style="display:none;" type="text" name="mail" id="id_mail" required="" value="{{ client_info.mail }}">
+                <input style="display:none;" type="text" name="phone" id="id_phone"  value="{{ client_info.phone }}">
+                <input style="display:none;" type ="text" name="pk" id="id_pk" required="" value="{{ client_info.pk }}">
+       <div class="col-12">
+        <textarea name="comment" cols="40" rows="10" maxlength="1000" class="textarea form-control form-control" required id="id_comment" >
+            {{ client_info.comment }}
+        </textarea>
+        </div>
+      </div>
+    </form>
+  </div>

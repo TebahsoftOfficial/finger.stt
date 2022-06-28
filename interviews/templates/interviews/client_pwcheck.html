@@ -1,0 +1,42 @@
+{% extends 'interviews/interviews_base.html' %}
+{% load crispy_forms_tags %}
+
+{% block nav_area %}
+{% endblock %}
+
+{% block link_area %}
+{% endblock %}
+
+{% block widget_area %}
+{% endblock %}
+
+{% block main_area %}
+<div class="row mb-2">
+  <div class="col-4">
+    <a href="/interviews/" class="btn btn-info rounded-pill" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:4'>
+        <i class="dripicons-backspace"></i><span><strong>&nbsp이전화면</strong></span></a>
+  </div>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+{% csrf_token %}
+    <!--div>
+    {{ form | crispy }}
+    </div-->
+
+  <div class="row mb-2">
+    <div class="col-4" >
+        <label for="id_password" class="form-label">폴더암호</label>
+        <input type="password" name="password" class="form-control" id="id_password">
+    </div>
+  </div>
+
+  <div class="row mb-2">
+      <div class="col-4">
+        <button class="btn btn-info rounded-pill" type="submit" style='font-size:small; padding:4'><i class="uil-check"></i><span><strong>확 인</strong></span></button>
+      </div>
+  </div>
+</form>
+
+{% endblock %}
+

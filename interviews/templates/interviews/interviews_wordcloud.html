@@ -1,0 +1,101 @@
+{% extends 'interviews/interviews_base.html' %}
+
+{% block head_content %}
+<script src="https://d3js.org/d3.v3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-dispatch@3"></script>
+<script src="https://rawgit.com/jasondavies/d3-cloud/master/build/d3.layout.cloud.js" type="text/JavaScript"></script>
+{% endblock %}
+
+{% block main_area %}
+<h3> {{ interviews.title }} </h3>
+<br>
+<h4> 단어 빈도수 </h4>
+<hr>
+    <table class="table table-hover">
+      <tbody>
+      <tr id="slabel">
+      </tr>
+      </tbody>
+      <tbody id="dic_freq">
+
+      </tbody>
+
+
+    <table class="table table-bordered table-centered mb-0">
+      <tbody id="wc_svg">
+
+      </tbody>
+    </table>
+    <script type="text/javascript">
+
+    view_wordcloud();
+    function view_wordcloud() {
+      var speakers = JSON.parse('{{ interviews.speakers }}'.replace(/&quot;/g,'"'));
+      var sents = JSON.parse('{{ sentimental }}'.replace(/&quot;/g,'"'));
+      var chk =0;
+      var slabel = '', dic_freq='', svg_list='';
+      var islabel = document.getElementById('slabel');
+      var idic_freq = document.getElementById('dic_freq');
+      var iwc_svg = document.getElementById('wc_svg');
+      const freqs=[];
+      var n1=0;
+      var hl_td= '';
+      var hl_td2= '';
+      var name='';
+
+      for(var idx in sents) {
+
+        if(chk%2==1) {
+          hl_td = '<td colspan=2 align="center" style="background-color: #ffffee">'
+          hl_td2 = '<td align="center" style="background-color: #fff8ee">'
+        }
+        else {
+          hl_td = '<td colspan=2 align="center">'
+          hl_td2 = '<td align="center">'
+        }
+        /*
+        if (idx == '1')  name = '{{ interviews.role_label0 }}';
+        else if (idx == '2') name = '{{ interviews.role_label1 }}';
+        else if (idx == '3') name = '{{ interviews.role_label2 }}';
+        else if (idx == '4') name = '{{ interviews.role_label3 }}';
+        else if (idx == '5') name = '{{ interviews.role_label4 }}';
+        */
+        name = speakers[chk].name;
+        slabel+=hl_td+ name + '</td>';
+        dic_freq = dic_freq + '<td align="center"> 단어 </td>' + '<td align="center"> 빈도수 </td>'
+        n1=0;
+        for(var wl in sents[idx].word_freq) {
+          if(chk==0) freqs[n1] = hl_td2 + wl+'</td>'+hl_td2+sents[idx].word_freq[wl]+'</td>';
+          else freqs[n1] = freqs[n1] + hl_td2 + wl+'</td>'+hl_td2+sents[idx].word_freq[wl]+'</td>';
+           n1=n1+1;
+        }
+
+
+        svg_list = svg_list + '<tr><th>' + name +'의 WordCloud'+ '</th></tr>'
+        //svg_list = svg_list + '<tr><object type="image/svg+xml" data=' +sents[idx].wc_svg+'></object></tr>'
+        svg_list = svg_list + '<tr><img src=' +sents[idx].wc_svg+' type="image/svg+xml"></tr>'
+
+        n1=n1-1;
+        //if(chk==1) break;
+        chk=chk+1;
+      }
+      chk =0;
+      for(let i=0; i<freqs.length; i++) {
+        dic_freq = dic_freq + '<tr>' + freqs[i] + '</tr>'
+      }
+      islabel.innerHTML = slabel;
+      idic_freq.innerHTML =dic_freq;
+      iwc_svg.innerHTML= svg_list;
+    };
+
+
+
+    </script>
+
+    <script>
+
+
+
+
+    </script>
+{% endblock %}

@@ -1,0 +1,30 @@
+<form method="post" enctype="multipart/form-data" style="margin:0; padding:0;">
+{% csrf_token %}
+    <div class="offcanvas offcanvas-top" data-bs-scroll="true" data-bs-backdrop="false" id="offcanvasScrolling" aria-labelledby="offcanvasTopLabel" style="margin:0; padding:0;">
+
+        <div class="row" style="margin:0; padding:0;">
+
+            <div class="col-3" >
+
+                <button class="btn btn-light" style="font-size:small; padding:3" type="submit">
+                    <i class="mdi mdi-grease-pencil"></i><span><strong>확인</strong></span></button>
+
+            </div>
+            <div class="offcanvas-header col-7" style="margin:0; padding:0;">
+                <label class="offcanvas-title form-label" id="offcanvasTopLabel" for="id_client_comment">{{client_info.name}}의 고객노트</label>
+            </div>
+            <div class="col-2" >
+                <button type="button" class="btn btn-light text-reset" data-bs-dismiss="offcanvas" aria-label="Close" style="margin:4px;padding:0">
+                   <strong> <i class="uil-times-square"></i></strong>
+                </button>
+            </div>
+        </div>
+        <div class="row" style="margin:0; padding:0;">
+            <div class="offcanvas-body col-10" style="margin:0; padding:0;">
+                <textarea name="client_comment" cols="40" rows="9" maxlength="1000" class="textarea form-control" style="margin:0; padding:0;" required id="id_client_comment" >
+                    {{ client_info.comment }}
+                </textarea>
+            </div>
+        </div>
+    </div>
+</form>

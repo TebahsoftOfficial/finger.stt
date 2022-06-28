@@ -1,0 +1,131 @@
+{% extends 'interviews/interviews_base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% load mathfilters %}
+{% block css_content %}
+<!-- plugin js -->
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/dropzone.min.js' %}"></script>
+
+{% endblock %}
+
+
+{% block subnav_area %}
+{% endblock %}
+
+{% block main_area %}
+
+<p class="h3"> 쿠폰 생성 </p>
+
+<form method="post" enctype="multipart/form-data" onsubmit="return submitchk();" >
+    {% csrf_token %}
+    <!--div>
+    {{ form | crispy }}
+   </div-->
+
+    <div class="row mb-2">
+      <div class="col-6">
+        <label for="id_type" class="form-label">구매유형</label>
+        <select class="form-select" id="id_type" name="type" onchange="at_type();">
+            <option value="months">월정액</option>
+            <option selected="selected" value="hours">시간단위</option>
+        </select>
+      </div>
+      <div class="col-6">
+        <label for="id_amount" class="form-label">구매수량 (VAT 별도)</label>
+        <select class="form-select" id="id_amount" name="amount" >
+
+        </select>
+      </div>
+    </div>
+    <div class="row mb-2">
+      <div class="col-4" style="display:none;" id="count_disp">
+        <label for="id_user_count" class="form-label" >구매인원(기관 단체 등록시 등록인원 입력)</label>
+        <input class="form-control" id="id_user_count" type="number" name="user_count" value=1 >
+      </div>
+
+    </div>
+
+    <button type="button" class="btn btn-info rounded-pill" onclick="code_generate();">코드생성</button>
+
+    <div class="row mb-2 mt-2">
+      <div class="col-6">
+        <label for="id_code" class="form-label">생성코드</label>
+        <input type="text" id="id_code" class="form-control" name="code">
+      </div>
+      <div class="col-6">
+        <label for="id_expire_at" class="form-label">만료일자</label>
+        <input class="form-control" id="id_expire_at" type="date" name="expire_at">
+      </div>
+    </div>
+    <button id="button1" class="btn btn-primary" type="submit" >
+        쿠폰 생성
+    </button>
+</form>
+
+<script>
+    window.onload = function () {
+        //console.log(document.getElementById("id_type").value);
+        at_type();
+    }
+
+
+    function code_generate() {
+       code = document.getElementById("id_code");
+       expire = document.getElementById("id_expire_at");
+       var today = new Date();
+       var year = today.getFullYear().toString().slice(-2);
+       var month = ('0' + (today.getMonth() + 1)).slice(-2);
+       var cds = 'CP'+year+month;     // 6 ch
+       cds += makecode(10);   // 6+10 ch
+       code.value = cds;
+
+       expire.value = expire_ymd10();
+       console.log(expire.value);
+       //expire.disabled = 'true';
+
+    }
+
+    function makecode(length) {
+       var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+       var charactersLength = characters.length;
+       var result = '';
+
+       for ( var i = 0; i < length; i++ ) {
+          result += characters.charAt(Math.floor(Math.random() * charactersLength));
+       }
+       return result;
+    }
+
+    function expire_ymd10() {
+        //yyyy-mm-dd 포맷 날짜 생성
+        var today = new Date();
+
+        var year = today.getFullYear();
+        today.setMonth(today.getMonth()+1);   // 한달뒤 +1
+        var month = ('0' + (today.getMonth() + 1)).slice(-2);   // 0 ~ 11 표기 +1,
+        var day = ('0' + today.getDate()).slice(-2);
+        return year + '-' + month  + '-' + day;
+    }
+
+    function at_type() {
+        cdisp = document.getElementById("count_disp");
+        ptype = document.getElementById("id_type");
+        amount = document.getElementById("id_amount");
+        console.log(ptype.value);
+        if(ptype.value == "months") {
+            cdisp.setAttribute("style","display:none;");
+            amount.innerHTML = '<option selected="selected" value=100>Lite 월 100분 :  7,000원 (5% 할인)</option><option value=240>Basic 월 4시간 : 12,000원 (10% 할인)</option><option value=600>Pro 월 10시간  : 24,000원 (15%할인)</option>'
+        }
+        else {
+            cdisp.setAttribute("style","display;");
+            amount.innerHTML = '<option selected="selected" value=60>1시간   : 5,000원</option><option value=240>4시간  : 18,000원</option><option value=600>10시간 : 40,000원</option>'
+        }
+    }
+
+    function submitchk() {
+    }
+</script>
+
+{% endblock %}
+{% block link_area %}
+{% endblock %}

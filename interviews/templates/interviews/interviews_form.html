@@ -1,0 +1,272 @@
+{% extends 'interviews/interviews_base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% load mathfilters %}
+{% block css_content %}
+<!-- plugin js -->
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/dropzone.min.js' %}"></script>
+<!-- init js -->
+<script src="{% static 'interviews/bootstrap/assets/js/ui/component.fileupload.js' %}"></script>
+
+<style>
+    #agreement {
+        border: 2 px;
+    }
+</style>
+{% endblock %}
+
+
+{% block subnav_area %}
+{% endblock %}
+
+{% block main_area %}
+
+    <p class="h3"> 대화 생성 </p>
+
+    {% if file_chk == 'fail' %}
+        <div class="col-10 alert alert-success" role="alert">
+            <i class="dripicons-checkmark me-2"></i>  <strong>지원하지않는 파일포맷입니다.</strong>
+        </div>
+    {% elif file_chk == 'timeover' %}
+        <div class="col-10 alert alert-success" role="alert">
+            <i class="dripicons-checkmark me-2"></i>  <strong>사용시간이 초과되었습니다. 운영자에게 문의하시기 바립니다.</strong>
+        </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" id="anal_form" onsubmit="return submitchk();" >
+        {% csrf_token %}
+        <!--div>
+        {{ form | crispy }}
+       </div-->
+
+        <div class="row mb-2">
+          <div class="col">
+            <label for="id_title" class="form-label">대화 제목</label>
+            <input type="text" class="form-control" name="title" id="id_title" placeholder="상담 제목을 입력하세요">
+          </div>
+        </div>
+
+
+        <div class="row mb-2">
+          <div class="col">
+            <label for="id_file_upload" class="form-label">대화 파일</label>
+            <input type="file" class="form-control" name="file_upload" required id="id_file_upload" placeholder="상담파일 입력" onchange="formchk();">
+          </div>
+        </div>
+
+
+
+        <div class="alert alert-warning" role="alert" style="display:none" id="timealert">
+            <i class="dripicons-warning me-2"></i>  <strong>시간부족</strong> <mytag id="alertmsg"></mytag>
+        </div>
+
+        <div class="alert alert-info" role="alert" style="display:none" id="timeinfo">
+            <i class="dripicons-information me-2"></i>  <mytag id="infomsg"></mytag>
+        </div>
+
+
+        <div class="row mb-1">
+            <div class="col-3">
+                <label for="id_nums_speaker" class="form-label">화자수</label>
+                <input type="number" class="form-control" name="nums_speaker" id="id_nums_speaker" value="2">
+            </div>
+            <div class="col-4">
+                <label for="id_stt_lang" class="form-label">언어선택</label>
+                <select class="form-select mb-3" name="stt_lang" id="id_stt_lang">
+                    <option selected value="ko-KR">한국어</option>
+                    <option value="en-US">엉어</option>
+                    <!--option value="enko">한+영</option>
+                    <option value="ja">일본어</option-->
+                </select>
+            </div>
+            <div id="div_id_client_name" class="col-5">
+                <label for="id_client_name" class="form-label">고객선택</label>
+                &nbsp&nbsp&nbsp&nbsp<a href="/interviews/add/client/ivcreate/" style="margin-top: 8;padding-top: 8px;"><i class="uil-folder-medical" ></i>&nbsp고객추가</a>
+                <!--input type="text" class="form-control" name="client_name" id="id_client_name" placeholder="고객이름"-->
+                <select class="form-select mb-3" name="client_name" id="id_client_name">
+                    <!--option selected>고객선택</option-->
+                    <option selected value="고객미정">고객미정</option>
+                    {% for client in clients_list %}
+                        {% if client.name != "고객미정" and user.username == client.counselor.username %}
+                            <option value="{{ client.name }}">{{ client.name }}</option>
+                        {% endif %}
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+        </div>
+
+        <div id="agreement" class="col-12 alert-info bg-info text-white border-0 mb-2 py-2 px-2" role="alert">
+            <center><strong>녹음파일 활용 동의 및 서약서</strong></center><br>
+            1. Finger.ai는 AI에 의해서 자동으로 녹취된 내용을 한글로 바꾸어 드리는 서비스로서, Finger.ai를 운영하고 있는 테바소프트(주)는 고객이 업로드한 파일에
+            대하여 고객 동의 없이는 어떤한 경우에도 열람하거나, 청취하지 않음을 서약합니다.<br><br>
+            2. 고객님이 Finger.ai에 업로드하시는 녹음파일은 불법적으로 녹취된 파일이 아니어야 하며, 녹음파일에 대한 불법성 여부에 대한 책임은 사용자 개인이 책임져야 합니다.
+        </div>
+
+        <button id="button1" class="btn btn-primary" type="submit" disabled>
+            동의 후 등록
+        </button>
+
+        {% block link_area %}
+        <br>
+        {% endblock %}
+    </form>
+    <audio id="audiochk" style="display:none" onloadedmetadata="audio_duration();"></audio>
+    <video id="videochk" style="display:none" onloadedmetadata="video_duration();"></video>
+    <script>
+    var popupid;
+
+    window.onunload = function () {
+       // alert("Unload?");
+        if(popupid!=null) popupid.close();
+    }
+
+
+    function submitchk() {
+        var obj1= document.getElementById("button1")
+        //obj1.setAttribute('style','background-color:rgba(0,99,255,0.60); cursor:progress')
+        obj1.setAttribute('style','cursor:progress')
+        obj1.setAttribute('onclick','noaction()')
+        obj1.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>분석중...'
+        obj1.setAttribute("disabled","true");
+        popupid = window.open("../../inaction/","_blank");
+        return true;
+    }
+
+
+    function noaction() {};
+
+    function formchk(e) {
+        //e.preventDefault();
+        a=filechk();
+
+        if (a==1)
+        {
+            //location.href="/interviews/create/fail/";
+            alert("지원하지 않는 파일 포맷입니다.");
+            return false;
+        }
+        return true;
+    }
+
+    function filechk() {
+
+        audioExt = ".mp3,.aac,.ac3,.ogg,.flac,.wav";
+        audioExtArray = audioExt.split(",");
+
+        videoExt = ".avi,.mp4,.mov,.wmv,.flv,.mkv,.m4a";
+        videoExtArray = videoExt.split(",");
+
+        ifile = document.getElementById("id_file_upload")
+        Temp_file1 = ifile.files[0];
+
+        Temp_strExt1_num = ifile.value.slice(ifile.value.lastIndexOf(".")).toLowerCase();
+
+        agree = document.getElementById("button1");
+
+        for(i=0; i<audioExtArray.length; i++) {
+            if(Temp_strExt1_num == audioExtArray[i]) {
+                const fileurl = URL.createObjectURL(Temp_file1);
+                audio = document.getElementById("audiochk")
+                audio.setAttribute("src", fileurl);
+                audio.load();
+
+                agree.disabled = false;
+                $('#timealert').attr("style","display:none");
+                $('#timeinfo').attr("style","display");
+                $('#infomsg').html("사용시간 정보를 알 수 없습니다.");
+                return 0;
+            }
+        }
+
+        for(i=0; i<videoExtArray.length; i++) {
+            if(Temp_strExt1_num == videoExtArray[i]) {
+                const fileurl = URL.createObjectURL(Temp_file1);
+                video = document.getElementById("videochk")
+                video.setAttribute("src", fileurl);
+                video.load();
+                agree.disabled = false;
+                $('#timealert').attr("style","display:none");
+                $('#timeinfo').attr("style","display");
+                $('#infomsg').html("사용시간 정보를 알 수 없습니다.");
+                return 0;
+            }
+        }
+        amsg = document.getElementById("timealert")
+        imsg = document.getElementById("timeinfo")
+        amsg.setAttribute("style","display:none")
+        imsg.setAttribute("style","display:none")
+        agree.disabled = true;
+        return 1;
+    }
+
+    function audio_duration() {
+        audio = document.getElementById("audiochk")
+        agree = document.getElementById("button1")
+       {% with mtime=manager.max_time utime=manager.use_time ptime=manager.paid_time %}
+        {% with ctime=mtime|sub:utime %}
+
+            ad = Math.ceil(audio.duration/60)
+            rem = {{ ptime|add:ctime }}
+            if(ad > rem) {
+                agree.disabled = true;
+                amsg = document.getElementById("timealert")
+                info = document.getElementById("alertmsg")
+                imsg = document.getElementById("timeinfo")
+                amsg.setAttribute("style","display")
+                imsg.setAttribute("style","display:none")
+                info.innerHTML = "잔여시간보다 "+ (ad-rem) + "분 부족합니다.<br>(채팅상담으로 구매요청 바랍니다.)"
+                //alert("사용시간 초과! \n잔여시간보다 "+ (ad-rem) + "분 부족합니다..\n(채팅상담으로 구매요청)");
+            }
+            else {
+                agree.disabled = false;
+                amsg = document.getElementById("timealert")
+                info = document.getElementById("infomsg")
+                imsg = document.getElementById("timeinfo")
+                amsg.setAttribute("style","display:none")
+                imsg.setAttribute("style","display")
+                info.innerHTML = "사용시간이 "+Math.ceil(audio.duration/60)+"분 차감됩니다."
+                //alert( "사용시간이 "+Math.ceil(audio.duration/60)+"분 차감됩니다.");
+
+            }
+        {% endwith %}
+      {% endwith %}
+    }
+
+    function video_duration() {
+        video = document.getElementById("videochk")
+        agree = document.getElementById("button1")
+       {% with mtime=manager.max_time utime=manager.use_time ptime=manager.paid_time %}
+        {% with ctime=mtime|sub:utime %}
+            vd = Math.ceil(video.duration/60)
+            rem = {{ ptime|add:ctime }}
+            if(vd > rem) {
+                agree.disabled = true;
+                amsg = document.getElementById("timealert")
+                info = document.getElementById("alertmsg")
+                imsg = document.getElementById("timeinfo")
+                amsg.setAttribute("style","display")
+                imsg.setAttribute("style","display:none")
+                info.innerHTML = "잔여시간보다 "+ (vd-rem) + "분 부족합니다.<br>(채팅상담으로 구매요청 바랍니다.)"
+                //alert("사용시간 초과! \n잔여시간보다 "+ (vd-rem) + "분 부족합니다.<br>(채팅상담으로 구매요청)");
+            }
+            else {
+                agree.disabled = false;
+                amsg = document.getElementById("timealert")
+                info = document.getElementById("infomsg")
+                imsg = document.getElementById("timeinfo")
+                amsg.setAttribute("style","display:none")
+                imsg.setAttribute("style","display")
+                info.innerHTML = "사용시간이 "+Math.ceil(video.duration/60)+"분 차감됩니다."
+                //alert( "사용시간이 "+Math.ceil(video.duration/60)+"분 차감됩니다.");
+
+            }
+        {% endwith %}
+      {% endwith %}
+    }
+
+
+    </script>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends 'interviews/interviews_base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block nav_area %}
+{% endblock %}
+
+{% block subnav_area %}
+{% endblock %}
+
+{% block link_area %}
+{% endblock %}
+
+{% block widget_area %}
+{% endblock %}
+
+{% block css_content %}
+<link href="{% static 'interviews/bootstrap/assets/css/vendor/quill.core.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'interviews/bootstrap/assets/css/vendor/quill.snow.css' %}" rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block main_area %}
+<div class="row mb-2">
+</div>
+<form method="post" autocomplete="off" enctype="multipart/form-data" onSubmit="chkForm1();" >
+{% csrf_token %}
+  <div class="row mb-2">
+    <div class="col-4" >
+        <label for="id_name"><i class="mdi mdi-face"></i>&nbsp고객명</label>
+        <input class="form-control" type="text" name="name" id="id_name" value="{{ client.name }}">
+    </div>
+    <div class="col-4">
+        <label for="id_mail"><i class="mdi mdi-email"></i>&nbsp이메일주소</label>
+        <input class="form-control" type="text" name="mail" id="id_mail" value="{{ client.mail }}">
+    </div>
+
+    <div class="col-4">
+        <label for="id_phone"><i class="mdi mdi-card-account-phone"></i>&nbsp연락처</label>
+        <input type="text" name="phone" id="id_phone" class="form-control" data-toggle="input-mask" data-mask-format="000-0000-0000" value="{{ client.phone }}">
+    </div>
+    <div style="display:none;">
+        <input class="form-control" type="text" name="pk" id="id_pk" value="{{ client.pk }}">
+    </div>
+  </div>
+  <div class="row mb-2">
+    <div class="col-4" >
+        <label for="id_password" class="form-label"><i class="mdi mdi-form-textbox-password"></i>&nbsp폴더암호</label>
+        <input type="password" name="password" class="form-control" id="id_password" value="{{ client.password }}">
+    </div>
+  </div>
+  <div class="row mb-2">
+    <div class="col-12">
+        <label for="id_comment" class="form-label"><i class="uil-notes"></i>&nbsp고객노트</label>
+
+        <div id="snow-editor" style="height: 300px;" >
+            {% autoescape off %}
+            {{ client.comment }}
+            {% endautoescape %}
+       </div>
+
+        <textarea style="display:none;" name="comment" cols="40" rows="5" maxlength="1000" class="textarea form-control" id="id_comment" >
+
+        </textarea>
+    </div>
+  </div>
+    <div class="row">
+      <div class="col-4">
+        <button class="btn btn-info rounded-pill" type="submit" onClick="htrans()" id="id_update" style="padding:3;"><i class="mdi mdi-creation me-1"></i> <span>정보갱신</span></button>
+      </div>
+      <div class="col-5">
+      </div>
+      <div class="col-3">
+        <a href="javascript:windows.close();" class="btn btn-info rounded-pill" onClick="window.close()" style="padding:3;"><i class="mdi mdi-creation me-1"></i> <span>종료</span></a>
+      </div>
+   </div>
+
+</form>
+
+{% endblock %}
+
+{% block extra_javascript %}
+<!-- quill js -->
+<script src="{% static 'interviews/bootstrap/assets/js/vendor/quill.min.js' %}"></script>
+<!-- quill Init js-->
+<script src="{% static 'interviews/bootstrap/assets/js/pages/demo.quilljs.js' %}"></script>
+
+<script>
+function chkForm1() {
+    fm1=document.getElementById('id_name');
+    fm1.disabled = false;
+}
+
+function htrans() {
+    sn = document.querySelector('.ql-editor');
+    snow=document.getElementById('snow-editor');
+    cf=document.getElementById('id_comment');
+    cf.innerHTML=sn.innerHTML;
+};
+</script>
+
+{% endblock %}

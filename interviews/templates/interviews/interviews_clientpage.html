@@ -1,0 +1,202 @@
+{% extends 'interviews/interviews_base.html' %}
+{% load static %}
+{% block load_area %}
+{% load socialaccount %}
+{% load mathfilters %}
+{% endblock %}
+
+{% block css_content %}
+     <link href="{% static 'interviews/bootstrap/assets/css/sidebar.min.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'interviews/bootstrap/assets/css/vendor/quill.core.css' %}" rel="stylesheet" type="text/css" />
+<link href="{% static 'interviews/bootstrap/assets/css/vendor/quill.snow.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'interviews/bootstrap/assets/css/vendor/select.bootstrap5.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'interviews/bootstrap/assets/css/vendor/dataTables.bootstrap5.css' %}" rel="stylesheet" type="text/css" />
+    <link href="{% static 'interviews/bootstrap/assets/css/vendor/responsive.bootstrap5.css' %}" rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block extra_javascript %}
+    <script src="{% static 'interviews/bootstrap/assets/js/vendor/dropzone.min.js' %}"></script>
+    <script src="{% static 'interviews/bootstrap/assets/js/vendor/dataTables.select.min.js' %}"></script>
+
+    <script src="{% static 'interviews/bootstrap/assets/js/vendor/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'interviews/bootstrap/assets/js/vendor/dataTables.bootstrap5.js' %}"></script>
+    <script src="{% static 'interviews/bootstrap/assets/js/vendor/dataTables.responsive.min.js' %}"></script>
+    <script src="{% static 'interviews/bootstrap/assets/js/vendor/responsive.bootstrap5.min.js' %}"></script>
+
+    <!-- Datatable Init js -->
+    <script src="{% static 'interviews/bootstrap/assets/js/pages/demo.datatable-init.js' %}"></script>
+
+    <!-- quill js -->
+    <script src="{% static 'interviews/bootstrap/assets/js/vendor/quill.min.js' %}"></script>
+    <!-- quill Init js-->
+    <script src="{% static 'interviews/bootstrap/assets/js/pages/demo.quilljs.js' %}"></script>
+
+    <script>
+    function htrans() {
+        sn = document.querySelector('.ql-editor');
+        snow=document.getElementById('snow-editor');
+        cf=document.getElementById('id_comment');
+        test=document.getElementById('test');
+
+        cf.innerHTML=sn.innerHTML;
+            test.innerHTML=sn.innerHTML;
+
+    };
+
+    window.onload = function () {
+        var config = {
+          "modules": {
+              toolbar: false,
+          },
+          "theme": "snow",
+        };
+        var quill = new Quill( "#editor", config );
+
+        $('#scroll-horizontal-datatable').dataTable({
+            "scrollX":200,
+            "pageLength": 50
+        });
+        quill.enable(false);
+    }
+    </script>
+    <script src="{% static 'interviews/bootstrap/assets/js/sidebar.min.js' %}"></script>
+    <script>
+    function sidebarToggle(){
+        $('.ui.bottom.sidebar')
+          .sidebar('setting', 'transition', 'push')
+          .sidebar('toggle')
+        ;
+    }
+    </script>
+{% endblock %}
+
+    {% block head_title %}상담목록{% endblock %}
+{% block subnav_area %}
+<nav class="navbar navbar-expand navbar-light bg-light">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/interviews/client/{{client_info.pk}}" style="font-size:small; padding-top:1;">&nbsp <strong><i class="dripicons-user" ></i>{{client_info.name}}</strong></a>
+  </div>
+</nav>
+
+{% endblock %}
+
+
+{% block main_area %}
+    {% if client_interviews.exists %}
+        <div class="row mb-3">
+            <div >
+                <div class="card mb-md-0 " >
+                    <div class="card-body" style="margin:2;padding:0;">
+
+                        <div class="row">
+                            <div class="col-8"  >
+                                <h5 class="card-title my-1">&nbsp&nbsp{{client_info.name}}의 고객노트</h5>
+                            </div>
+
+                            <div class="card-widgets col-4" stle="margin-right:2px">
+                                <a href="{% url 'client_modify' client_info.pk %}" target="_blank" class="btn btn-light" style="font-size:small; padding:3" role="button">
+                                    <i class="mdi mdi-grease-pencil"></i><strong>수정</strong></a>
+                                <a href="{% url 'client_page' client_info.pk %}"  style="padding:3;" role="button">
+                                    <i class="mdi mdi-refresh-circle" ></i></a>
+                                <a data-bs-toggle="collapse" href="#collapseExample" role="button" aria-expanded="true" aria-controls="collapseExample">
+                                  <i class="mdi mdi-minus"></i></a>
+
+                            </div>
+                        </div>
+                        <div class="collapse show" id="collapseExample">
+                          <div class="card card-body" style="margin:2;padding:0;">
+                              <div id="editor" style="height: 200px;" enable:false >
+                                {% autoescape off %}
+                                {{client_info.comment}}
+                                {% endautoescape %}
+                                </div>
+
+                          </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+              <!--div class="accordion-item col-10">
+                <h2 class="accordion-header" id="headingOne">
+                  <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                    &nbsp&nbsp{{client_info.name}}의 고객노트
+                  </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                  <div class="accordion-body">
+                    {{ client_info.comment|linebreaks }}
+                  </div>
+                </div>
+              </div-->
+
+
+        </div>
+
+
+
+    <table id="scroll-horizontal-datatable" class="table nowrap w-100" data-order='[2,"desc"]'>
+        <thead>
+            <tr>
+                <th>대화제목</th>
+                <th>상담시간</th>
+                <th>날짜</th>
+                <th>삭제</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for iv in client_interviews %}
+                {% if user.username == iv.author.mid.username and iv.delete_flag != "true" %}
+            <tr>
+                <td>
+                    <i class="dripicons-document" ></i> <a href="{{ iv.get_absolute_url }}" >{{ iv.title }}</a>
+                </td>
+                <td style="text-align: right; ">{{ iv.duration }}</td>
+                <td>
+
+                   <center> <span class="badge bg-secondary">{{ iv.created_at|date:"Y-m-d" }}</span></center>
+                </td>
+                <td>
+                    <center><a href="{% url 'interview_delete' iv.pk %}" onclick="return confirm('정말 삭제하시겠습니까?')">
+                    <i class="dripicons-trash" ></i></a></center>
+                </td>
+
+            </tr>
+            {% endif %}
+            {% empty %}
+                <tr>No articles yet.</tr>
+            {% endfor %}
+
+        </tbody>
+    </table>
+
+    {% else %}
+        <br>
+        <h3>아직 게시물이 없습니다.</h3>
+    {% endif %}
+
+
+
+<script src="{% static 'interviews/bootstrap/assets/js/audiorecord/audioapp.js' %}"></script>
+<script src="{% static 'interviews/bootstrap/assets/js/audiorecord/WebAudioRecorder.min.js' %}"></script>
+
+
+{% endblock %}
+
+
+{% block link_area %}
+    <div class="row mt-2">
+        <div class="col-4" >
+        <a href="/interviews/create/norm/" class="btn btn-light btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>
+            <i class="dripicons-document-edit"></i><span><strong>&nbsp상담작성</strong></span></a>
+        </div>
+        <div class="col-4">
+        </div>
+        <div class="col-4">
+            <a href="/accounts/logout/" class="btn btn-light btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>
+                <i class="mdi mdi-logout"></i><span><strong>&nbsp로그아웃</strong></span></a>
+        </div>
+    </div>
+{% endblock %}

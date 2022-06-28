@@ -1,0 +1,32 @@
+{% extends 'interviews/interviews_base.html' %}
+
+{% block main_area %}
+<div class="row">
+    <div class="col-9">
+        <h3 style="margin-top: 3px;"> {{ interviews.title }} </h3>
+    </div>
+
+    <div class="col-3" style="margin-top: 3px;">
+        <a id="id_smm" onclick="go_summ();" type="button" class="btn btn-info rounded-pill" style="margin-top: 3px; font-size:small; padding:3">
+        <a1 id="id_text"><i class="dripicons-document" ></i>요약생성</a1></a>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_javascript %}
+<script type="text/javascript">
+    $( document ).ready(function() {
+        go_summ();
+    })
+    function go_summ() {
+        var obj1= document.getElementById("id_smm");
+        var obj2= document.getElementById("id_text");
+        obj1.setAttribute('style','margin-top: 3px; font-size:small; padding:3;cursor:progress');
+        obj1.setAttribute('onClick','javascript:;');
+        obj2.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>요약중...'
+        document.getElementById("id_smm").setAttribute("disabled","true");
+        location.href="/interviews/summary/{{ interviews.pk }}/b/"
+    }
+ </script>
+{% endblock %}
