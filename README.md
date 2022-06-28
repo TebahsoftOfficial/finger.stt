@@ -30,6 +30,8 @@ Installation
 
 - fingerai 폴더에 settings.py 파일 작성
 
+- MySQL 설치 및 데이터베이스 생성 
+
 - 데이터베이스 테이블 생성 및 작성
 > python manage.py makemigrations
 > python manage.py migrate
@@ -59,6 +61,32 @@ https://127.0.0.1/admin
 > client id : 카카오에서 App ID 생성 후 입력
 > Secret key : 카카오에서 API Secret 생성 후 입력
 > Available sites 에서 127.0.0.1 선택
+
+- ".env" 파일 작성
+> manage.py 와 같은 경로에 작성
+> 각종 key, id 정보를 환경변수로 작성 저장
+> Django key
+DJANGO_KEY
+>MySQL 데이터베이스 네임
+DB_NAME
+>MySQL 아이디,패스워드
+DB_USER
+DB_PWD
+> clova speech 
+CLOVA_INVOKE_URL=""    
+CLOVA_SECRET=""
+> naver api key, id
+NAVER_APIKEY_ID=''
+NAVER_APIKEY=''
+> toss 결재 live key
+CLIENT_KEY=""
+SECRET_KEY=""
+> toss 결재 test key
+TEST_CLIENT_KEY=""
+TEST_SECRET_KEY=""
+> naver object storage key
+STORE_ACC_KEY=""
+STORE_SEC_KEY=""
 
 
 
