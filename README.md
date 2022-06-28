@@ -12,4 +12,18 @@ finger.stt 는 음성인식 대화 서비스로서 인식된 음성으로 부터
 
 Installation
 -----------------------------
+- Github에서 소스 코드 가져오기
+명령창 실행 ( Win + R 실행 cmd 입력 )
+> mkdir github
+> cd github
+> git clone https://github.com/TebahSoft/finger.stt.git
+
 - 가상환경 설치
+> cd finger.stt
+> python -m venv ./fvenv
+
+- 가상환경 활성화
+> fvenv\Scripts\activate
+
+- 패키지 설치
+> pip install -r requirements.txt
