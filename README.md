@@ -17,13 +17,20 @@ finger.stt 는 음성인식 대화 서비스로서 인식된 음성으로 부터
 ```
 
 - 가상환경 설치
-```
+``` 
+(1) 또는 (2) 방법 선택
 > cd finger.stt
+(1)
+> conda create -n finger_venv python=3.8.10
+(2)
 > python -m venv ./fvenv
 ```
 
 - 가상환경 활성화
 ```
+(1)
+> conda activate  finger_venv
+(2)
 > fvenv\Scripts\activate
 ```
 
