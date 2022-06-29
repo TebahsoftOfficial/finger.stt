@@ -272,9 +272,9 @@ python manage.py runsslserver --certificate test_django.crt --key test_django.ke
 [[OpenSSL 다운로드](http://slproweb.com/products/Win32OpenSSL.html)]
 ```
 //key 파일 생성
-openssl genrsa 2048 > django.key
+openssl genrsa 2048 > test_django.key
 //key 파일 이용하여 crt 파일 생성
-openssl req -new -x509 -nodes -sha256 -days 365 -key django.key > django.crt
+openssl req -new -x509 -nodes -sha256 -days 365 -key test_django.key > test_django.crt
 ```
 
 - 카카오톡에서 App ID , Secret 생성 
