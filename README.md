@@ -37,6 +37,8 @@ finger.stt 는 음성인식 대화 서비스로서 인식된 음성으로 부터
 - 패키지 설치
 ```
 > pip install -r requirements.txt
+> pip install boto3==1.6.19
+> pip install python-dateutil==2.8.2
 ```
 
 - fingerai 폴더에 settings.py 파일 작성
@@ -227,9 +229,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 ```
 
-- .envs 파일 작성 및 각종 key 정보 
-* manage.py 와 같은 경로에 작성
-* 각종 key, id 정보를 환경변수로 작성 저장
+- .envs 파일 작성 및 각종 key 정보
+- manage.py 와 같은 경로에 작성
+- 각종 key, id 정보를 환경변수로 작성 저장
 ```
 DJANGO_KEY= Django key
 DB_NAME = MySQL 데이터베이스 네임
@@ -250,6 +252,9 @@ STORE_SEC_KEY=naver object storage secret key
 - 데이터베이스 테이블 생성 및 작성
 ```
 > python manage.py makemigrations
+   # 아래와 같은 에러 발생시
+   # importError: DLL load failed while importing win32api: 지정된 모듈을 찾을 수 없습니다
+    > conda install -c anaconda pywin32   로 해결
 > python manage.py migrate
 ```
 
@@ -260,16 +265,16 @@ STORE_SEC_KEY=naver object storage secret key
 
 - Runserver 실행 
 ```
-> python manage.py runsslserver --certificate test_django.crt --key test_django.key 0.0.0.0:443
+python manage.py runsslserver --certificate test_django.crt --key test_django.key 0.0.0.0:443
 ```
 
 - SSL 설치 및 .key .crt 파일 생성 방법
 [[OpenSSL 다운로드](http://slproweb.com/products/Win32OpenSSL.html)]
 ```
 //key 파일 생성
-> openssl genrsa 2048 > django.key
+openssl genrsa 2048 > django.key
 //key 파일 이용하여 crt 파일 생성
-> openssl req -new -x509 -nodes -sha256 -days 365 -key django.key > django.crt
+openssl req -new -x509 -nodes -sha256 -days 365 -key django.key > django.crt
 ```
 
 - 카카오톡에서 App ID , Secret 생성 
