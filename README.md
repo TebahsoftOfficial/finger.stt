@@ -7,6 +7,8 @@ finger.stt 는 음성인식 대화 서비스로서 인식된 음성으로 부터
 - 축어록 생성 기능
 - 화자 추가 및 편집 기능
 
+![fingerstt01](https://user-images.githubusercontent.com/88182481/176337441-c43cf729-5124-400a-ab62-b18c18585fa4.png)
+
 ## Installation
 - Github에서 소스 코드 가져오기
 명령창 실행 ( Win + R 실행 cmd 입력 )
