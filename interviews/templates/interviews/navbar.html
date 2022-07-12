@@ -54,34 +54,9 @@
             </button>
             <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
             {% if user.is_authenticated %}
-                {% if user.is_superuser %}
-
-                  <!--a class="nav-link" href="/interviews/purchase/" style="font-size:medium; padding:3">
-                      &nbsp&nbsp<i class="dripicons-briefcase"></i><strong>쿠폰발급</strong></a-->
-
-                  <a class="nav-link" href="/interviews/purchase/manage/" style="font-size:medium; padding:3">
-                    &nbsp&nbsp<i class="dripicons-briefcase"></i><strong>쿠폰관리</strong></a>
-                  <!--a class="nav-link" href="/interviews/purchase/ownlist/" style="font-size:medium; padding:3">
-                    &nbsp&nbsp<i class="dripicons-cart"></i><strong>구매내역</strong></a-->
-
-
-
-
-                {% endif %}
-                      <a class="nav-link" href="/interviews/purchase/request/" style="font-size:medium; padding:3">
-                      <!--a class="nav-link" href="https://smartstore.naver.com/finger_ai/category/ALL?cp=1" style="font-size:medium; padding:3" target="_blank"-->
-                     &nbsp&nbsp<i class="dripicons-cart"></i><strong>시간충전</strong></a>                
-                      <a class="nav-link" href="/interviews/purchase/ownlist/" style="font-size:medium; padding:3">
-                         &nbsp&nbsp<i class="dripicons-cart"></i><strong>구매내역</strong></a>
-                      <a class="nav-link" href="/interviews/purchase/regist/norm/" style="font-size:medium; padding:3">
-                         &nbsp&nbsp<i class="dripicons-cart"></i><strong>쿠폰등록</strong></a>
-
-
                 <a class="nav-link" href="/accounts/logout/" style="font-size:medium; padding:3">
                     &nbsp&nbsp<i class="mdi mdi-logout"></i><strong>로그아웃</strong></a>
-
             {% else %}
-
                   <a href="{% provider_login_url 'kakao' %}" id="kakao_login">Log In</a>
 
             {% endif %}

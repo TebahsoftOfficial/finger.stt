@@ -40,10 +40,17 @@
        </div-->
 
         <div class="row mb-2">
-          <div class="col">
+          <div class="col-8">
             <label for="id_title" class="form-label">대화 제목</label>
             <input type="text" class="form-control" name="title" id="id_title" placeholder="상담 제목을 입력하세요">
           </div>
+          <div class="col-4">
+            <label for="id_stt_engine" class="form-label">STT엔진</label>
+            <select class="form-select mb-3" name="stt_engine" id="id_stt_engine">
+                <option selected value="naver">네이버클로바</option>
+                <option value="vito">비토</option>
+            </select>
+        </div>       
         </div>
 
 
@@ -74,7 +81,7 @@
                 <label for="id_stt_lang" class="form-label">언어선택</label>
                 <select class="form-select mb-3" name="stt_lang" id="id_stt_lang">
                     <option selected value="ko-KR">한국어</option>
-                    <option value="en-US">엉어</option>
+                    <option value="en-US">영어</option>
                     <!--option value="enko">한+영</option>
                     <option value="ja">일본어</option-->
                 </select>

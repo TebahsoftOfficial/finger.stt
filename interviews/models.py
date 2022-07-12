@@ -66,13 +66,8 @@ class Interviews(models.Model):
     stt_lang = models.CharField(default="ko-KR", max_length=16)
     nums_speaker = models.IntegerField(default=2)
 
-    '''
-    role_label0 = models.CharField(default="A", max_length=30)
-    role_label1 = models.CharField(default="B", max_length=30)
-    role_label2 = models.CharField(default="C", max_length=30)
-    role_label3 = models.CharField(default="D", max_length=30)
-    role_label4 = models.CharField(default="E", max_length=30)
-    '''
+    similarity = models.IntegerField(blank=True, default=0)
+    stt_engine = models.CharField(default="naver", max_length=8)
 
     client_name = models.CharField("고객이름", blank=True, max_length=30)
     client_comment = models.TextField("참조내용", blank=True)
@@ -99,9 +94,6 @@ class Interviews(models.Model):
 
     def get_file_ext(self):
         return self.get_file_name().split('.')[-1]
-
-    def get_summary_url(self):
-        return f'/interviews/summary/{self.pk}/'
 
     def get_update_url(self):
         return f'/interviews/update/{self.pk}/'

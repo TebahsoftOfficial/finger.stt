@@ -12,6 +12,8 @@ from .clova_speech import ClovaSpeechClient
 from .clova_sentimental import ClovaSentimental
 from .clova_summary import ClovaSummary
 from .enc_dec import enc, dec, dict_to_binary, binary_to_dict
+from .vito_lib import vito_auto_process, create_presigned_url
+
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 from wordcloud import WordCloud
@@ -71,15 +73,71 @@ import telegram # pip install python-telegram-bot
 import boto3  # pip install boto3==1.6.19
 # python-dateutil 2.6.1  => 2.8.1
 
+from sklearn.feature_extraction.text import TfidfVectorizer
+import numpy as np
+import pandas as pd
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 MEDIA_ROOT = os.path.join(BASE_DIR, '_media')
 
-#key = bytes([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF])
-cyp_key = bytes([0x0f, 0x1e, 0x2d, 0x3c, 0x4b, 0x5a, 0x69, 0x78, 0x87, 0x96, 0xA5, 0xB4, 0xC3, 0xD2, 0xE1, 0xF0])
-aad = bytes([0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E])  #
-nonce = bytes([0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC])  # 기본 12(96bit)byte이며 길이 변경 가능.
+cyp_key = bytes([0x82, 0xC8, 0xA9, 0xC3, 0xD2, 0xE1, 0xF0, 0x3F, 0x28, 0x2d, 0x3c, 0x4b, 0x5a, 0x69, 0x78, 0x87])
+aad = bytes([0x38, 0xA6, 0xB7, 0x08, 0xC9, 0xDA, 0x91, 0x82, 0x73, 0x64, 0x5B, 0x4C, 0x3D, 0x2E])
+nonce = bytes([0xF6, 0xE7, 0xD8, 0xC9, 0xB1, 0xA2, 0x93, 0x84, 0x75,  0x6A, 0x5B, 0x5C])  # 기본 12(96bit)byte이며 길이 변경 가능.
 
+def cos_similarity(v1, v2):
+    dot_product = v1 @ v2
+    ab_norm = np.sqrt(sum(np.square(v1))) * np.sqrt(sum(np.square(v2)))
+    similarity = dot_product / ab_norm
+    
+    return similarity
+
+
+def similarity(request, engine, sid):
+    doc_list = []
+    intv = Interviews.objects.get(id=sid)
+    with open(intv.content, 'rb') as sent_file:
+        rdata = sent_file.read()
+        sent_data = dec(cyp_key, aad, nonce, rdata, intv.gd_cmk)
+    sent_data = binary_to_dict(sent_data)
+    
+    if engine=='naver':
+        doc_list.append(sent_data['text'])
+    elif engine=='vito':
+        tstr = ''
+        for st in sent_data:
+            tstr = tstr + st['msg'] + ' '
+        doc_list.append(tstr)
+
+    print(doc_list)
+    rstr = ''
+    with open(os.path.join(BASE_DIR, 'interviews')+'\label1.txt', 'rt',encoding="utf-8") as sent_file:
+        rdata = sent_file.readlines()
+
+    for data in rdata:
+        if(data!="\n"):
+            rstr = rstr + data
+    doc_list.append(rstr)
+
+    tfidf_vect = TfidfVectorizer()
+    feature_vect = tfidf_vect.fit_transform(doc_list)
+
+    # Sparse Matrix형태를 Dense Matrix로 변환
+    feature_vect_dense = feature_vect.todense() # toarray()도 가능
+
+    # 첫 번째, 두 번째 문서 피처 벡터 추출
+    vect1 = np.array(feature_vect_dense[0]).reshape(-1,)
+    vect2 = np.array(feature_vect_dense[1]).reshape(-1,)
+    print(f"\nSTT 처리문서 feacture vector:\n {vect1[0:20]}....\n")
+    print(f"Label 문서(정답지) feacture vector:\n {vect2[0:20]}...")    
+    # 코사인 유사도 
+    similarity_simple = cos_similarity(vect1, vect2 )
+    print(f"\nSTT 처리문서와 Label 문서 Cosine 유사도: {similarity_simple:.3f}\n")
+ 
+    return render(
+        request,
+        'interviews/interviews_realtime.html',
+    )      
 
 def RealtimeInterviews(request):
     return render(
@@ -241,138 +299,6 @@ def dbupdate(request, msg):
 
             Interviews.objects.filter(pk=interview.pk).update(speakers=speakers_out, gs_cmk=gs_mac)
 
-
-    elif msg == 'encrypt':
-        i = 0
-        for interview in interviews:
-            update = 0
-            timestr = datetime.now().strftime('%Y%m%d-%H-%M-%S')
-            try:
-                wstr = interview.file_upload.path
-            except Exception as e:
-                print(f"FilePath NonExist::{e}")
-                continue
-            tpath = wstr[0:wstr.rfind('\\') + 1]  # last index
-
-            gdpath =f"{tpath}STT_data{i}_{timestr}.faj"
-            gspath =f"{tpath}Spker_data{i}_{timestr}.faj"
-            smpath =f"{tpath}Senti_data{i}_{timestr}.faj"
-            smrpath = f"{tpath}Smry_data{i}_{timestr}.faj"
-
-            i = i + 1
-
-            try:
-                fstr = interview.content
-                fidx = fstr.rfind('.')
-                if fidx != -1:
-                    fext = fstr[fidx + 1:fidx + 4]
-                else:
-                    fext = "non"
-
-
-                if fext != "faj": # faj가 아닌경우 암호화 진행
-                    update = 1
-                    if fext == "jso":
-                        with open(fstr,'r') as f:
-                            get_data = json.load(f)
-                            sbin = dict_to_binary(get_data)
-                    else:
-                        sbin = fstr.encode("utf-8")
-                    gd_cyp, gd_mac = enc(cyp_key, aad, nonce, sbin)
-                    with open(gdpath, 'wb') as outfile:
-                        outfile.write(gd_cyp)
-                    Interviews.objects.filter(pk=interview.pk).update(content=gdpath,  gd_cmk=gd_mac)
-                    print("1Enc")
-            except Exception as e:
-                print(f"Cypher1 Error Message::{e}")
-
-            try:
-                fstr = interview.content_div
-                fidx = fstr.rfind('.')
-                if fidx!=-1:
-                    fext = fstr[fidx + 1:fidx + 4]
-                else:
-                    fext = "non"
-                if fext != "faj":
-                    update = 1
-                    if fext=="jso":
-                        with open(fstr, 'r') as f:
-                            group_sent = json.load(f)
-                            sbin = dict_to_binary(group_sent)
-                    else:
-                        sbin = fstr.encode("utf-8")
-                    gs_cyp, gs_mac = enc(cyp_key, aad, nonce, sbin)
-                    with open(gspath, 'wb') as outfile1:
-                        outfile1.write(gs_cyp)
-                    Interviews.objects.filter(pk=interview.pk).update(content_div=gspath,  gs_cmk=gs_mac)
-                    print("2Enc")
-            except Exception as e:
-                print(f"Cypher2 Error Message::{e}")
-
-            try:
-                fstr = interview.sentimental
-                fidx = fstr.rfind('.')
-                if fidx!=-1:
-                    fext = fstr[fidx + 1:fidx + 4]
-                else:
-                    fext = "non"
-                if fext != "faj":
-                    update = 1
-                    if fext=="jso":
-                        with open(fstr, 'r') as f:
-                            sentimental = json.load(f)
-                            sbin = dict_to_binary(sentimental)
-                    else:
-                        sbin = fstr.encode("utf-8")
-                    sm_cyp, sm_mac = enc(cyp_key, aad, nonce, sbin)
-                    with open(smpath, 'wb') as outfile2:
-                        outfile2.write(sm_cyp)
-                    Interviews.objects.filter(pk=interview.pk).update(sentimental=smpath,  sm_cmk=sm_mac)
-                    print("3Enc")
-            except Exception as e:
-                print(f"Cypher3 Error Message::{e}")
-
-            try:
-                fstr = interview.summary
-                fidx = fstr.rfind('.')
-
-                if fidx != -1:
-                    fext = fstr[fidx + 1:fidx + 4]
-                else:
-                    fext = "non"
-                print(f"SummaryFormat::{fext}")
-
-                if fext != "faj":
-                    update = 1
-                    if fext == "jso":
-                        with open(fstr, 'r') as f:
-                            summary = json.load(f)
-                            sbin = dict_to_binary(summary)
-                    else:
-                        #summary = json.loads(fstr)
-                        sbin = fstr.encode("utf-8")
-                    smr_cyp, smr_mac = enc(cyp_key, aad, nonce, sbin)
-                    with open(smrpath, 'wb') as outfile3:
-                        outfile3.write(smr_cyp)
-                    Interviews.objects.filter(pk=interview.pk).update(summary=smrpath,  smr_cmk=smr_mac)
-                    print("4Enc")
-            except Exception as e:
-                print(f"Cypher4 Error Message::{e}")
-
-    elif msg == 'wordcloud':
-        wordcloudUpdate(request)
-
-
-    '''
-    elif msg == 'sec2min':  # Warning Just one time running
-        for interview in interviews:
-            try:
-                dur = ((interview.duration)+59)/60
-                Interviews.objects.filter(pk=interview.pk).update(duration=dur)
-            except Exception as e:
-                print(f"Sec2MinError:{e}")
-    '''
-
     return redirect('/interviews/')
 
 def load_model():
@@ -385,104 +311,6 @@ def inaction(request):
         request,
         'interviews/interviews_inaction.html',
     )
-
-def wordcloudUpdate(req):
-    nlp = Okt()
-
-    interviews = Interviews.objects.all()
-    #interviews = Interviews.objects.filter(client_name='오정섭')
-
-    #res = Manager.objects.filter(mid=req.user).get()
-    '''
-    try :
-        own = User.objects.filter(username="이병훈").get()
-        res = Manager.objects.filter(mid=own).get()
-        interviews = Interviews.objects.filter(author=res)
-    except Exception as e:
-        print(f"Object Get Error:{e}")
-    '''
-
-    # 불용어 처리
-    with open("./interviews/stopwords_korean.txt", "rt", encoding="utf-8") as f:
-        lines = f.readlines()
-    stop_words = []
-    for line in lines:
-        line = line.replace('\n', '')
-        stop_words.append(line)
-   #print(f"StopWords:::{stop_words}")
-
-    fig = plt.figure(figsize=(4, 3))
-
-    for interview in interviews:
-        spk_sent = dict()  # { '1':'sentence','2':'sentence'}
-        senti = dict()  # { '1':{ ...}, '2': {...},}
-        get_data = []  # [ {'speaker':'1', ....}, {'speaker':'2',....}]
-
-        timestr = datetime.now().strftime('%Y%m%d-%H-%M-%S')
-        print(f"Title:{interview.title}")
-        try:
-            senti = json.loads(interview.sentimental)
-            get_data = json.loads(interview.content_div)
-            #print(f"Senti1:{senti}")
-            for ti in get_data:
-                speaker = ti['speaker']
-                if speaker not in spk_sent:
-                    spk_sent[speaker] = ''
-                spk_sent[speaker] = spk_sent[speaker] + ti['sentence']
-        except Exception as e:
-            print(f"WC DataReadError:{e}")
-            continue
-
-        for key, value in spk_sent.items():
-            nouns = nlp.nouns(value.replace('\n', ''))
-            # nouns = nlp.nouns(cont4s[key].replace('\n', ''))
-
-            ft_nouns = [each_word for each_word in nouns
-                        if each_word not in stop_words]
-
-            #print(f"FTNouns:::{ft_nouns}")
-            ncount = Counter(ft_nouns)
-            nfreq = ncount.most_common(10)
-
-            palettes = ['spring', 'summer', 'seismic', 'PuBu', 'winter']
-
-            try:
-                wordcloud = WordCloud(width=400, height=300, margin=20, font_path='./interviews/font/NanumGothic.ttf',
-                                      background_color='white',
-                                      colormap=palettes[3]).generate_from_frequencies(dict(ncount))
-
-                wc_file = MEDIA_ROOT + "\interviews\img\svgfile_" + key + "_" + timestr + '.svg'
-                #senti[key]["wc_svg"] = '/media/interviews/img/svgfile_' + key + "_" + timestr + '.svg'
-
-                #fig = plt.figure(figsize=(4, 3))
-                plt.imshow(wordcloud)
-                plt.axis('off'), plt.xticks([]), plt.yticks([])
-                plt.tight_layout()
-                plt.subplots_adjust(left=0, bottom=0, right=1, top=1, hspace=0, wspace=0)
-
-                #plt.savefig(wc_file, dpi=700, format="svg")
-                wcf = MEDIA_ROOT + senti[key]["wc_svg"].replace('/', '\\').replace('\\media','')
-                plt.savefig(wcf, dpi=700, format="svg")
-                plt.clf()
-                #plt.close(fig)
-
-                senti[key]["type_count"] = len(ncount)
-                senti[key]["word_freq"] = {}
-                for i in nfreq:
-                    senti[key]["word_freq"][i[0]] = i[1]
-
-            except Exception as e:
-
-                print(f"WC Error Message::{e}")
-                break
-            ft_nouns.clear()
-            nfreq.clear()
-            ncount.clear()
-            nouns.clear()
-        #print(f"SentiG {senti}")
-        Interviews.objects.filter(pk=interview.pk).update(sentimental = json.dumps(senti))
-    print("WordCloud Update COmpleted!!!")
-
 
 def addspeaker(request, pk):
     if request.method == "POST":
@@ -532,22 +360,6 @@ def sentenceUpdate(request, pk):
 
         all_sentence = json.loads(all_sentence)
 
-        '''
-        print("All Sentences\n")
-        i=0
-        for sent in all_sentence:
-            print(f"{i}::{sent}\n")
-            i = i+1
-
-        print("Intv Sentences\n")
-        i=0
-        #for sent in intv_sentences:
-        for i in range(len(intv_sentences)):
-            print(f"{i}::{intv_sentences[i]}\n")
-        '''
-
-
-
         stn_no_speaker = {}
         prev_speaker = 'superman'
         for si in range(len(speakers)):
@@ -557,50 +369,32 @@ def sentenceUpdate(request, pk):
         for sent in all_sentence:
 
             if sent['generated'] == 'false':
-                #print("Falsed")
-                #org_sent = copy.deepcopy(intv_sentences[gen_idx])
-
                 gen_idx = gen_idx + 1
 
             fspk = sent['speaker']
-            #print(f"Index::{gen_idx}")
-            #print(f"Append>data{gen_idx}::{org_sent}")
+
             gen_sentences.append({})
             gen_sentences[i] = copy.deepcopy(intv_sentences[gen_idx])
-           #gen_sentences.append(org_sent)
-
-
-            #intv_sentences[i]['sentence'] = all_sentence[i]['sentence']
             gen_sentences[i]['sentence'] = sent['sentence']
 
-            #intv_sentences[i]['speaker'] = fspk
             gen_sentences[i]['speaker'] = fspk
             sindex = next((index for (index, d) in enumerate(speakers) if d["label"] == fspk), None)
-            #intv_sentences[i]['name'] = speakers[sindex]['name']
-            gen_sentences[i]['name'] = speakers[sindex]['name']
-            #print(f"Speakerss::{intv_sentences[i]['speaker']}:{intv_sentences[i]['name']}")
 
-            # sentence number update
-            #speaker = intv_sentences[i]['speaker']
+            gen_sentences[i]['name'] = speakers[sindex]['name']
+
             speaker = gen_sentences[i]['speaker']
             if prev_speaker != speaker:
                 stn_no_speaker[speaker] = stn_no_speaker[speaker] + 1
                 prev_speaker = speaker
-                #intv_sentences[i]["first_sentence"] = "true"
                 gen_sentences[i]['first_sentence'] = "true"
             else :
                 gen_sentences[i]['first_sentence'] = "false"
 
-            #intv_sentences[i]["sent_no"] = stn_no_speaker[speaker]
             gen_sentences[i]["sent_no"] = stn_no_speaker[speaker]
 
-
-
             i = i + 1
-            #gen_sentences.append(base_sentence)
 
         try:
-            #gs_cyp, gs_mac = enc(cyp_key, aad, nonce, dict_to_binary(intv_sentences))
             gs_cyp, gs_mac = enc(cyp_key, aad, nonce, dict_to_binary(gen_sentences))
 
         except Exception as e:
@@ -615,402 +409,7 @@ def sentenceUpdate(request, pk):
             return HttpResponse("SentenceUpdate Write Error")
 
         Interviews.objects.filter(pk=pk).update(gs_cmk=gs_mac, quiet_basis= quiet_basis, title= title)
-        #print(f"sentenceUpdate::{all_sentence[0]['speaker']}:{all_sentence[0]['sentence']}")
         return HttpResponse("Sentence Updated")
-
-def record(request):
-    if request.method == "POST":
-        audio_file = request.FILES.get("recorded_audio")
-        title = request.POST.get("rec_title")
-
-        if not title :
-            title = "대화녹음_"+datetime.now().strftime('%Y%m%d-%H-%M-%S')
-
-        intv = Interviews.objects.create(title=title, file_upload=audio_file)
-        intv.save()
-        #messages.success(request, "Audio recording successfully added!")
-        #print(f'1Record posted:{audio_file}')
-
-        cuser = request.user
-        if not cuser.is_authenticated:
-            return JsonResponse(
-                {
-                    "url": '/interviews',
-                    "success": True,
-                }
-            )
-        try:
-            clt = Client.objects.filter(name='고객미정', counselor=cuser).get()
-        except ObjectDoesNotExist:
-            clt = Client.objects.create(name='고객미정', counselor=cuser)
-
-        speaker_nums = 2
-        ret, pauthor, get_data, group_sent, timestr, sentimental, speakers = InterviewAnalysis(cuser, speaker_nums, intv.file_upload.name)
-
-        if ret == -1:
-            print(f'Return Fail')
-            return JsonResponse(
-                {
-                    "url": '/interviews/list/recfail',
-                    "success": True,
-                }
-            )
-        rget_data = json.dumps(get_data, ensure_ascii=False)
-        rgroup_sent = json.dumps(group_sent, ensure_ascii=False)
-        rsentimental = json.dumps(sentimental, ensure_ascii=False)
-        speakers = json.dumps(speakers, ensure_ascii=False)
-
-
-
-        Interviews.objects.filter(pk=intv.pk).update(content=rget_data, content_div=rgroup_sent,
-                                  sentimental=rsentimental, client_name='고객미정', client=clt, author=pauthor, speakers=speakers)
-
-        #print(f'Record Interview Created:{intv.pk}')
-
-        #messages.success(request, "Audio recording successfully added!")
-        return JsonResponse(
-            {
-                "url": '/interviews',
-                "success": True,
-            }
-        )
-        '''
-        return render(
-            request,
-            'interviews/interviews_clientlist.html',
-            {
-                'interviews_list': Interviews.objects.all(),
-                'clients_list': Client.objects.all(),
-                'client_unknown': Interviews.objects.filter(client_name='고객미정').order_by('-created_at'),
-                'manager': Manager.objects.get(mid=request.user),
-                'pw_result': intv.pk
-            }
-        )
-        '''
-
-
-
-
-def summary_ready(request, pk):
-    interviews = Interviews.objects.get(pk=pk)
-    res = Manager.objects.filter(mid=request.user).get()
-    if interviews.summary != "":
-        return redirect(f'/interviews/summary/{pk}/exist/')  # exist
-    else:
-        #return redirect(f'/interviews/summary/{pk}/b/')  # exist
-        return render(
-            request,
-            'interviews/interviews_summary_ready.html',
-            {
-                'interviews': interviews,
-                'clients_list': Client.objects.filter(counselor=request.user),
-                'client_unknown': Interviews.objects.filter(client_name='고객미정', author=res),
-                'client_info': interviews.client,
-                'manager': res,
-            }
-        )
-
-
-def summary(request, pk, stype):
-    nlp = Okt()
-    intv = Interviews.objects.get(pk=pk)
-    # 불용어 처리
-    with open("./interviews/stopwords_korean.txt", "rt", encoding="utf-8") as f:
-        lines = f.readlines()
-
-    # txt 읽을 때 \n표시를 제거
-    stop_words = []
-    for line in lines:
-        line = line.replace('\n', '')
-        stop_words.append(line)
-
-    if stype != 'exist':
-        timestr = datetime.now().strftime('%Y%m%d-%H-%M-%S')
-
-        if stype == 'a':
-            with open(intv.content, 'rb') as sent_file:
-                rdata = sent_file.read()
-                sent_data = dec(cyp_key, aad, nonce, rdata, intv.gd_cmk)
-            sent_data = binary_to_dict(sent_data)
-            sum_sentence = summary_type_a(sent_data)
-
-        elif stype == 'b':
-            with open(intv.content_div, 'rb') as sent_file:
-                rdata = sent_file.read()
-                sent_data = dec(cyp_key, aad, nonce, rdata, intv.gs_cmk)
-            sent_data = binary_to_dict(sent_data)
-            sum_sentence = summary_type_b(sent_data, intv.stt_lang)
-
-        for key, value in sum_sentence.items():
-
-            for i, document in enumerate(value):
-                clean_words = []
-                for word in word_tokenize(document):
-                    if word not in stop_words:  # 불용어 제거
-                        clean_words.append(word)
-                #print(f"Clean words::{clean_words}")
-                sum_sentence[key][i] = ' '.join(clean_words)
-
-
-        wstr = intv.object_path #file_upload.path
-        wstr = wstr[0:wstr.rfind('/')+1]
-        wstr = wstr.replace('/','\\')
-        wstr = wstr.replace('data','',1)
-        tpath = MEDIA_ROOT + wstr
-
-
-
-        smrpath = tpath + "Smry_data_" + timestr + ".faj"
-
-        try:
-            smr_cyp, smr_mac = enc(cyp_key, aad, nonce, dict_to_binary(sum_sentence))
-        except Exception as e:
-            print(f"SummaryCypher Error Message::{e}")
-
-        try:
-            with open(smrpath, 'wb') as outfile:
-                outfile.write(smr_cyp)
-        except Exception as e:
-            print(f"Summary JSON File Gen Error Message::{e}")
-
-        Interviews.objects.filter(pk=pk).update(summary=smrpath, smr_cmk=smr_mac)
-
-    interviews = Interviews.objects.get(pk=pk)
-    res = Manager.objects.filter(mid=request.user).get()
-
-    with open(interviews.summary, 'rb') as sent_file:
-        rdata = sent_file.read()
-        smry_data = dec(cyp_key, aad, nonce, rdata, interviews.smr_cmk)
-    smry_data = smry_data.decode("utf-8")  #binary_to_dict(smry_data)
-
-    return render(
-        request,
-        'interviews/interviews_summary.html',
-        {
-            'interviews': interviews,
-            'clients_list': Client.objects.filter(counselor=request.user),
-            'client_unknown': Interviews.objects.filter(client_name='고객미정', author=res),
-            'client_info': intv.client,
-            'manager': res,
-            'summary': smry_data,
-        }
-    )
-
-def summary_type_b(scontent, stt_lang):
-    #get_data = json.loads(scontent)
-    get_data = scontent
-
-    full_sort = []
-    full_cnt = 0
-    sent_cnt = {}
-    sum_sentence={}   #  { '1':["sen1","sen2"], '2':[] }  => mod: { '1': [ { 'sentence':'bdbdbd','sent_no':0}, { 'sentence':'bdbdbd',{'sent_no':2}  ...] , '2':[] }
-    csumm = ClovaSummary()
-    opti = {'language': 'ko', 'model': 'general', 'tone': 2, 'summaryCount': 2}
-
-    summary1 = {'full': []}
-
-    for sent in get_data :
-        slabel=sent['speaker']
-        tsent ={}
-
-        if slabel not in sum_sentence:
-            sum_sentence[slabel] = []
-            sent_cnt[slabel] = 0
-            #sum_sentence[slabel].append(sent['sentence'])
-            tsent['sentence'] = sent['sentence']
-            tsent['sent_no'] = sent['sent_no']
-            #sum_sentence[slabel].append(tsent)
-            sum_sentence[slabel].append({})
-            sum_sentence[slabel][len(sum_sentence[slabel])-1] = copy.deepcopy(tsent)
-            #full_sort.append(tsent)
-            full_sort.append({})
-            full_sort[len(full_sort) - 1] = copy.deepcopy(tsent)
-        else:
-            if sum_sentence[slabel][sent_cnt[slabel]]['sent_no'] == sent['sent_no'] :
-                temp1 = sum_sentence[slabel][sent_cnt[slabel]]['sentence'] + ' ' + sent['sentence']
-                if len(temp1) < 1900:
-                    sum_sentence[slabel][sent_cnt[slabel]]['sentence'] = temp1
-                temp2 = full_sort[full_cnt]['sentence'] + ' ' + sent['sentence']
-                if len(temp2) < 1900:
-                    full_sort[full_cnt]['sentence'] = temp2
-            else:
-                tsent['sentence'] = sent['sentence']
-                tsent['sent_no'] = sent['sent_no']
-                #sum_sentence[slabel].append(tsent)
-                sum_sentence[slabel].append({})
-                sum_sentence[slabel][len(sum_sentence[slabel]) - 1] = copy.deepcopy(tsent)
-                #full_sort.append(tsent)
-                full_sort.append({})
-                full_sort[len(full_sort) - 1] = copy.deepcopy(tsent)
-                sent_cnt[slabel] = sent_cnt[slabel] + 1
-                full_cnt = full_cnt + 1
-        #print(f"ExtSent: {sum_sentence}")
-
-    for spart in sum_sentence:
-        sum_sentence[spart] = sorted(sum_sentence[spart], key=lambda sent: len(sent['sentence']), reverse=True)
-        if len(sum_sentence[spart]) < 2:
-            summary1[spart] = []
-            #summary1[spart].append("[요약에 적합하지 않은 문장입니다.]" )
-            summary1[spart].append(sum_sentence[spart][0]['sentence'])
-            continue
-
-        sen_len = len(sum_sentence[spart])//10
-        if sen_len <= 1:
-            sen_len = 1
-        sum_sentence[spart] = sum_sentence[spart][0:sen_len]
-        sum_sentence[spart] = sorted(sum_sentence[spart], key=lambda sent: sent['sent_no'], reverse=False)
-        #print(f"Sentence::{spart}::{sum_sentence[spart]}")
-
-        for i in range(sen_len):
-            docum = {'content': ''}
-            docum['content'] = sum_sentence[spart][i]['sentence'].replace('\n', '')
-            summary = ""
-
-
-            if stt_lang == 'ko-KR':
-
-                try:
-                    res2 = csumm.req_url(document=docum, option=opti)
-                    smm_data = json.loads(res2.text)
-                    summary = smm_data['summary']
-                except Exception as e:
-                    if smm_data['error']['errorCode'] == "E100":  # "Insufficient valid sentence"
-                        summary = docum['content']+'[E1]'
-                    else:
-                        summary = docum['content']+'[E2]'
-
-            elif stt_lang == 'en-US':
-                nlp = spacy.load("en_core_web_sm")
-                nlp.add_pipe("textrank");
-                doc = nlp(docum['content'])
-                tr = doc._.textrank
-                for sent in tr.summary(limit_phrases=15, limit_sentences=2):
-                    summary = summary + str(sent) + ' '
-
-
-            if i == 0:
-                summary1[spart] = []
-                summary1[spart].append(summary)
-                #summary1[spart].append(smm_data['summary'])
-            else:
-                summary1[spart].append(summary)
-                #summary1[spart].append(smm_data['summary'])
-
-
-
-    if len(full_sort) < 2:
-        #summary1['full'].append("[요약에 적합하지 않은 문장입니다.]")
-        summary1['full'].append(full_sort[0]['sentence'])
-        return summary1
-    #full_sort = sorted(get_data, key=lambda sent: len(sent['sentence']), reverse=True)
-    full_sort = sorted(full_sort, key=lambda sent: len(sent['sentence']), reverse=True)
-
-    sen_len = len(full_sort)//10
-    if sen_len <= 1:
-        sen_len = 1
-    # print(f"LengthSentence:{sen_len},,TenPercent:{sen_len//10}")
-    full_sort = full_sort[0:sen_len]
-    full_sort = sorted(full_sort, key=lambda sent: sent['sent_no'], reverse=False)
-
-
-    for i in range(sen_len):
-        docum = {'content': ''}
-
-        docum['content'] = full_sort[i]['sentence'].replace('\n', '')
-        summary = ""
-        if stt_lang == 'ko-KR':
-            try:
-                res2 = csumm.req_url(document=docum, option=opti)
-                smm_data = json.loads(res2.text)
-                summary = smm_data['summary']
-            except Exception as e:
-                if smm_data['error']['errorCode'] == "E100":  # "Insufficient valid sentence"
-                    summary = docum['content']+'[E1]'
-                else:
-                    summary = docum['content']+'[E2]'
-        elif stt_lang == 'en-US':
-            nlp = spacy.load("en_core_web_sm")
-            nlp.add_pipe("textrank");
-            doc = nlp(docum['content'])
-            tr = doc._.textrank
-            for sent in tr.summary(limit_phrases=15, limit_sentences=2):
-                summary = summary + str(sent) + ' '
-
-        summary1['full'].append(summary)
-
-    return summary1
-
-
-def summary_type_a(scontent):
-    #get_data = json.loads(scontent)
-    get_data = scontent
-
-    seg_len = len(get_data['segments'])
-    temp_cont = {'full': ''}  # to check the size limit of 2000 character
-    wdcnt = {'full': 0}
-    cont4s = {'full': []}  # content aggregate in one paragraph for summary
-    summa = {}
-    temp_cont = {'full': ''}  # to check the size limit of 2000 character
-
-    csumm = ClovaSummary()
-
-    for i in range(seg_len):
-        cur_text = get_data['segments'][i]['text']
-        speaker = get_data['segments'][i]['speaker']['label']
-        if speaker in temp_cont:
-            wdcnt[speaker] = wdcnt[speaker] + len(cur_text)
-            if wdcnt[speaker] < 1900:
-                temp_cont[speaker] = temp_cont[speaker] + cur_text
-            else:
-                cont4s[speaker].append(temp_cont[speaker])
-                temp_cont[speaker] = cur_text
-                wdcnt[speaker] = len(cur_text)
-        else:
-            cont4s[speaker] = []
-            wdcnt[speaker] = len(cur_text)
-            temp_cont[speaker] = cur_text
-
-        wdcnt['full'] = wdcnt['full'] + len(cur_text)
-        if wdcnt['full'] < 1900:
-            temp_cont['full'] = temp_cont['full'] + cur_text
-        else:
-            cont4s['full'].append(temp_cont['full'])
-            temp_cont['full'] = cur_text
-            wdcnt['full'] = len(cur_text)
-
-    # for문 종료 후 남아있는 마지막 문장 저장
-    for key, value in temp_cont.items():
-        cont4s[key].append(value)
-
-    opti = {'language': 'ko', 'model': 'general', 'tone': 3, 'summaryCount': 3}
-    for key, value in cont4s.items():
-
-        if value and len(value) >= 50:  # 글자수가 50글자 이상인 문장만 요약
-
-            # Naver Summary
-            docum = {'content': ''}
-
-            temp_summ = value
-
-            for raw_senten in temp_summ:
-                docum['content'] = raw_senten.replace('\n', '')
-                res2 = csumm.req_url(document=docum, option=opti)
-                smm_data = json.loads(res2.text)
-                if key not in summa:
-                    summa[key] = ''
-                try:
-                    # if len(summa[key]+smm_data['summary'])<=2000 :
-                    summa[key] = summa[key] + smm_data['summary'] + '\n'
-                except KeyError:
-                    if smm_data['error']['errorCode'] == "E100":  # "Insufficient valid sentence"
-                        summa[key] = summa[key] + cont4s[key][0]
-                    #else:
-                    #    summa[key] = summa[key] + cont4s[key][0] + ' [' + smm_data['error'][
-                    #        'errorCode'] + ']' + '\n'
-
-        else:
-            summa[key] = cont4s[key][0]  # 'Too Short sentence'
-    return summa
 
 def sentimental(request, pk):
     interviews = Interviews.objects.get(pk=pk)
@@ -1058,80 +457,6 @@ def wordcloud(request, pk):
         }
     )
 
-def code_generate(request):
-    #length_of_string = 8
-    #rstr=''.join(random.choice(string.ascii_letters + string.digits) for _ in range(length_of_string))
-    if request.method == 'POST':
-        code_generate = request.POST['code_generate']
-        interview_id = request.POST['interview_id']
-        #print(f"Generate Code:: {code_generate}== Interview_ID::{interview_id}")
-        CodeShare.objects.create(mid=request.user, code=code_generate,
-                                 interview_obj=Interviews.objects.get(pk=interview_id),
-                                 expire_at=datetime.now()+ timedelta(weeks=1))
-    return redirect(f'/interviews/list/norm')
-
-
-def code_regist(request):
-    msg = 'default'
-
-    if request.method == 'POST':
-        code_regist = request.POST['code_regist']
-        #print(f"Regist Code:: {code_regist}")
-
-        try:
-            cs_obj = CodeShare.objects.get(code=code_regist)
-        except ObjectDoesNotExist:
-            cs_obj = None
-            print("Regist Code Not Exist")
-            msg = "misspell"
-            return HttpResponse(msg)
-
-        if datetime.now() > cs_obj.expire_at:
-            #print("Regist Code Expired!!")
-            msg = "expiredcode"
-
-        else:
-            msg = "none"
-            interviews = cs_obj.interview_obj
-            #print(f"Client:{interviews.client_name}")
-            try:
-                clt = Client.objects.filter(name="고객미정", counselor=request.user).get()
-                print(f"Find client::{clt.name}")
-            except ObjectDoesNotExist:
-            #except Exception as e:
-            #    print(f"Except :: {e}")
-                clt = Client.objects.create(name=interviews.client_name, counselor=request.user)
-
-            head, tail = os.path.split(interviews.content)
-            cp_con = head+"/\CP_"+tail
-            shutil.copyfile(interviews.content, cp_con)
-            head, tail = os.path.split(interviews.content_div)
-            cp_cdiv = head+"/\CP_"+tail
-            shutil.copyfile(interviews.content_div, cp_cdiv)
-            cp_summ = ''
-            if interviews.summary != '':
-                head, tail = os.path.split(interviews.summary)
-                cp_summ = head + "/\CP_" + tail
-                shutil.copyfile(interviews.summary, cp_summ)
-            head, tail = os.path.split(interviews.sentimental)
-            cp_senti = head+"/\CP_"+tail
-            shutil.copyfile(interviews.sentimental, cp_senti)
-
-            Interviews.objects.create(title=interviews.title, content=cp_con, content_div=cp_cdiv,
-                                      duration=interviews.duration, summary=cp_summ, sentimental=cp_senti,
-                                      created_at=interviews.created_at, file_upload=interviews.file_upload,
-                                      nums_speaker=interviews.nums_speaker, client_name="고객미정", #interviews.client_name,
-                                      client=clt, quiet_basis=interviews.quiet_basis, client_comment=clt.comment,#client_comment=interviews.client_comment,
-                                      author=Manager.objects.get(mid=request.user), share_flag="true",
-                                      gd_cmk=interviews.gd_cmk, gs_cmk=interviews.gs_cmk,
-                                      sm_cmk=interviews.sm_cmk, smr_cmk=interviews.smr_cmk, speakers=interviews.speakers,
-                                      confidence=interviews.confidence, object_path=interviews.object_path)
-
-    return HttpResponse(msg)
-    #return HttpResponse(json.dumps({'message': msg}), content_type="application/json")
-    #return redirect(f'/interviews/list/{msg}/')
-
-
 def ExceptRedirect(request, msg):
     res = Manager.objects.filter(mid=request.user).get()
     return render(
@@ -1147,18 +472,13 @@ def ExceptRedirect(request, msg):
         }
     )
 
-
-
 def document(request, pk):
     interviews = Interviews.objects.get(pk=pk)
     if request.method == 'POST':
         ccomment = request.POST['comment'].strip()
-        #print(f"Document::{ccomment}")
-            #clt = Client.objects.filter(pk=form.cleaned_data['pk']).update(comment=ccomment)
         Client.objects.filter(name=interviews.client_name, counselor=request.user).update(comment=ccomment)
         return redirect(f'/interviews/document/{pk}/')
     else:
-
         res = Manager.objects.filter(mid=request.user).get()
         return render(
             request,
@@ -1179,243 +499,6 @@ def delete(request, interview_pk):
     return redirect('/interviews')
 
 
-def verbatim(request, pk, doc_type, quiet_basis):
-    Interviews.objects.filter(pk=pk).update(quiet_basis=quiet_basis)
-    intv = Interviews.objects.get(pk=pk)
-    #iverb = json.loads(intv.content_div)
-    wstr = intv.content #file_upload.path
-    wstr = wstr[wstr.find('interviews')-1:wstr.rfind('\\')+1]
-    #wstr = wstr.replace('data','',1)
-    upath = wstr.replace('\\','/')
-    upath = f"/media{upath}"
-    #wstr = wstr.replace('/','\\')
-
-    #wstr = wstr[0:wstr.rfind('\\')+1]
-    tpath = MEDIA_ROOT + wstr      
-
-    fname = ''
-    #timestr = datetime.now().strftime('%Y-%m-%d-%H+%M+%S')
-    fname = f"Verbatim_{intv.title}"    
-
-    with open(intv.content_div, 'rb') as sent_file:
-        rdata = sent_file.read()
-        sent_data = dec(cyp_key, aad, nonce, rdata, intv.gs_cmk)
-    iverb = binary_to_dict(sent_data)
-
-    if doc_type == 'hwp':
-        fname = hwp_gen(iverb, int(quiet_basis),tpath, fname);
-    elif doc_type == 'doc':
-        fname = doc_gen(iverb, int(quiet_basis), tpath, fname);
-    return render(
-        request,
-        'interviews/verbatim_down.html',
-        {
-            'vfile': upath+fname,
-            'interview_pk': pk
-        }
-    )
-
-def set_col_widths(table):
-    widths = (Inches(1.5), Inches(6))
-    for row in table.rows:
-        for idx, width in enumerate(widths):
-            row.cells[idx].width = width
-
-def doc_gen(iverb, quiet_basis, tpath, fname):
-    #doc = Document()
-  
-    timestr = datetime.now().strftime('%Y%m%d-%H-%M-%S')
-    file_name = f"{fname}.docx"
-    #out_file =f"{MEDIA_ROOT}\interviews\hwp\{fname}"    
-    out_file = f"{tpath}{file_name}"
-    shutil.copyfile(f"{MEDIA_ROOT}\interviews\hwp\Verbatim_form.docx", out_file)
-
-    doc = Document(out_file)
-    #p = doc.add_paragraph('축어록')
-    #p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    #para = doc.paragraphs[0].runs
-    #for run in para:
-    #    run.font.size = Pt(20)
-
-    table = doc.add_table(rows= 1, cols= 2)
-    table.style = doc.styles['Table Grid']
-
-    row_cells = table.rows[0].cells
-    row_cells[0].text = '화자'
-    row_cells[1].text = '발언내용'
-    prev_spker = 'tbfirst'
-    vsent = ' '
-    for vcont in iverb:
-        if prev_spker != vcont['name']:
-            if prev_spker == 'tbfirst':
-                vsent = vsent + vcont['sentence']
-            else:
-                row_cells[1].text = vsent
-            row_cells = table.add_row().cells
-            row_cells[0].text = f"""{vcont['name']}{ vcont['sent_no']:0>3}"""
-            vsent = ' '
-        if quiet_basis != 0 and vcont['quiet_time'] >= quiet_basis:
-            vsent = vsent + '(침묵' + str(vcont['quiet_time']) + '초) '
-
-        vsent = vsent + vcont['sentence']
-        #row_data[1].text = vsent
-
-        prev_spker = vcont['name']
-
-    row_cells[1].text = vsent
-
-    set_col_widths(table)
-    #for cell in table.columns[0].cells:
-    #    cell.width = Inches(1.0)
-
-    doc.save(out_file)
-    return file_name
-
-
-def hwp_gen(iverb, quiet_basis, tpath, fname):
-    timestr = datetime.now().strftime('%Y%m%d-%H-%M-%S')
-    pythoncom.CoInitialize()  # 추가) com 라이브러리 초기화하기
-    #file_name = "Verbatim_" + timestr + ".hwp"
-    file_name = f"{fname}.hwp"
-    #out_file =f"{MEDIA_ROOT}\interviews\hwp\{fname}"
-    out_file = f"{tpath}{file_name}"
-    shutil.copyfile(f"{MEDIA_ROOT}\interviews\hwp\Verbatim_form.hwp", out_file)
-    hwp = win32.gencache.EnsureDispatch("HWPFrame.HwpObject")
-    hwp.RegisterModule("FilePathCheckDLL", "FilePathCheckerModule")
-    hwp.Open(out_file)
-    row = len(iverb)+2
-    col = 2
-    hwp.HAction.GetDefault("TableCreate", hwp.HParameterSet.HTableCreation.HSet)
-
-    hwp.HParameterSet.HTableCreation.Rows = row
-    hwp.HParameterSet.HTableCreation.Cols = col
-    hwp.HParameterSet.HTableCreation.WidthType = 0
-    hwp.HParameterSet.HTableCreation.HeightType = 0
-    hwp.HParameterSet.HTableCreation.WidthValue = hwp.MiliToHwpUnit(148.0)
-    hwp.HParameterSet.HTableCreation.CreateItemArray("ColWidth",col)
-    hwp.HParameterSet.HTableCreation.ColWidth.SetItem(0, hwp.MiliToHwpUnit(15))
-    hwp.HParameterSet.HTableCreation.ColWidth.SetItem(1, hwp.MiliToHwpUnit(124))   #110+15
-    #hwp.HParameterSet.HTableCreation.ColWidth.SetItem(2, hwp.MiliToHwpUnit(15))
-    hwp.HParameterSet.HTableCreation.CreateItemArray("RowHeight", row)
-
-    hwp.HAction.Execute("TableCreate", hwp.HParameterSet.HTableCreation.HSet)
-
-    vi = 0
-    hwp.HParameterSet.HInsertText.Text = "화자"
-    hwp.HAction.Execute("InsertText", hwp.HParameterSet.HInsertText.HSet)
-    hwp.Run("MoveRight")
-    hwp.HParameterSet.HInsertText.Text ="발언내용"
-    hwp.HAction.Execute("InsertText", hwp.HParameterSet.HInsertText.HSet)
-    hwp.Run("MoveRight")
-    #hwp.HParameterSet.HInsertText.Text = "감정"
-    #hwp.HAction.Execute("InsertText", hwp.HParameterSet.HInsertText.HSet)
-    #hwp.Run("MoveRight")
-    prev_spker = 'none'
-    for vcont in iverb:
-        if prev_spker != vcont['name']:
-            if (vi != 0):
-                hwp.Run("MoveRight")
-            hwp.HParameterSet.HInsertText.Text = f"""{vcont['name']}{ vcont['sent_no']:0>3}"""
-            hwp.HAction.Execute("InsertText", hwp.HParameterSet.HInsertText.HSet)
-            hwp.Run("MoveRight")
-        vsent = ' '
-        if quiet_basis != 0 and vcont['quiet_time'] >= quiet_basis:
-            vsent = vsent + '(침묵' + str(vcont['quiet_time']) + '초) '
-            hwp.HParameterSet.HInsertText.Text = vcont['sentence']
-        vsent = vsent + vcont['sentence']
-        hwp.HParameterSet.HInsertText.Text = vsent
-        hwp.HAction.Execute("InsertText", hwp.HParameterSet.HInsertText.HSet)
-
-        #hwp.HParameterSet.HInsertText.Text= vcont['senti']
-        #hwp.HAction.Execute("InsertText", hwp.HParameterSet.HInsertText.HSet)
-        #hwp.Run("MoveRight")
-        vi = vi + 1
-        prev_spker = vcont['name']
-    hwp.Save()
-    hwp.Quit()
-    pythoncom.CoUninitialize()  # 추가) 종료하기
-    #return redirect(f'/media/interviews/hwp/{fname}')
-    return file_name
-
-
-def verbatim0(request, pk):
-    intv = Interviews.objects.get(pk=pk)
-    iverb = json.loads(intv.content_div)
-    timestr = datetime.now().strftime('%Y%m%d-%H-%M-%S')
-    pythoncom.CoInitialize()  # 추가) com 라이브러리 초기화하기
-    fname = "Verbatim_" + timestr + ".hwp"
-    out_file =f"{MEDIA_ROOT}\interviews\hwp\{fname}"
-    shutil.copyfile(f"{MEDIA_ROOT}\interviews\hwp\Verbatim_form.hwp", out_file)
-    hwp = win32.gencache.EnsureDispatch("HWPFrame.HwpObject")
-    hwp.RegisterModule("FilePathCheckDLL", "FilePathCheckerModule")
-    hwp.Open(out_file)
-    vi = 0
-    for vcont in iverb:
-        hwp.PutFieldText(f"Speaker{{{{{vi}}}}}", f"""{vcont['name']}{ vcont['sent_no']}""")
-        hwp.PutFieldText(f"Contents{{{{{vi}}}}}", vcont['sentence'])
-        hwp.PutFieldText(f"Sentiment{{{{{vi}}}}}", vcont['senti'])
-        vi = vi + 1
-    hwp.Save()
-    hwp.Quit()
-    pythoncom.CoUninitialize()  # 추가) 종료하기
-    #return redirect(f'/interviews/{pk}/')
-    return redirect(f'/media/interviews/hwp/{fname}')
-
-def report(request, pk, label):
-    itv = Interviews.objects.get(pk=pk)
-
-    with open(itv.summary, 'rb') as sent_file:
-        rdata = sent_file.read()
-        sent_data = dec(cyp_key, aad, nonce, rdata, itv.smr_cmk)
-    isumm = binary_to_dict(sent_data)
-
-    #isumm = json.loads(itv.summary)
-    timestr = datetime.now().strftime('%Y%m%d-%H-%M-%S')
-
-    pythoncom.CoInitialize()  # 추가) com 라이브러리 초기화하기
-
-    if label!='full':
-        speakers = json.loads(itv.speakers)
-        sindex = next((index for (index, d) in enumerate(speakers) if d["label"] == label), None)
-        sname = speakers[sindex]["name"] 
-    else:
-        sname = 'full'
-
-    #fname = "report_" + timestr + ".hwp"
-    #fname = f"Report_{itv.title}_{label}.hwp"
-    fname = f"Report_{itv.title}_{sname}.hwp"
-    wstr = itv.content #file_upload.path
-    wstr = wstr[wstr.find('interviews')-1:wstr.rfind('\\')+1]
-    ustr = wstr.replace('\\','/')
-
-    out_file =f"{MEDIA_ROOT}{wstr}{fname}"
-    shutil.copyfile(MEDIA_ROOT + "\interviews\hwp\interview_form.hwp", out_file)
-    
-    hwp = win32.gencache.EnsureDispatch("HWPFrame.HwpObject")
-    hwp.RegisterModule("FilePathCheckDLL", "FilePathCheckerModule")
-    hwp.Open(out_file)
-    field_list = [i for i in hwp.GetFieldList().split("\x02")]  # 누름틀 불러오기
-    hwp.MovePos(2)  # 처음 으로 이동하기
-    sent_all = ''
-
-    #for sent in isumm['full']:
-    for sent in isumm[label]:
-        sent_all = sent_all + sent + ' '
-    for field in field_list:
-        if field == "InterviewSummary":
-            # hwp.PutFieldText(f'{field}{{{{{0}}}}}', "한글에 요약문을 삽입하는 코드 테스트 입니다.")
-            hwp.PutFieldText(f'{field}', sent_all)
-        elif field == "InterviewTitle":
-            hwp.PutFieldText(f'{field}', itv.title)
-    hwp.Save()
-    hwp.Quit()
-    pythoncom.CoUninitialize()  # 추가) 종료하기
-    #return redirect(f'/interviews/{pk}/')
-    #return redirect(f'/media/interviews/hwp/{fname}')
-
-    
-    return redirect(f'/media{ustr}{fname}')
-
 # First connect
 def start(request):
     cuser = request.user
@@ -1430,209 +513,6 @@ def start(request):
             Manager.objects.filter(mid=request.user).update(use_time=0, max_time=0)
     return redirect('/interviews/list/norm')
 
-def activate_account(request, hash):
-    account = get_account_from_hash(hash)
-    if not account.is_active:
-        account.activate()
-        account.save()
-        user = account.user
-        login(request, user)
-
-
-def pay_cancel(request):
-    cuser = request.user
-    
-    if request.method == 'POST':  
-        coupon = request.POST.get['cancel_coupon'] 
-        reason = request.POST.get['cancel_reason']
-        #reason = "고객변심"
-        purchase = Purchase.objects.get(code=coupon)
-        pkey =  purchase.paymentKey #request.POST.get['paymentKey']
-        cancelAmount = 0
-
-        if purchase.amount== 60:
-            cancelAmount = 5500 * purchase.coupon_count
-        elif purchase.amount == 240:
-            cancelAmount = 4*4950 * purchase.coupon_count
-        elif purchase.amount == 600:
-            cancelAmount = 10*4400 * purchase.coupon_count
-        elif purchase.amount == 1:
-            cancelAmount =  100 * purchase.coupon_count            
-        
-        #print(f"Request Cancel Amount: {cancelAmount}")
-        invoke_url = 'https://api.tosspayments.com/v1/payments/'
-        # length_of_string = 8
-        # rstr=''.join(random.choice(string.ascii_letters + string.digits) for _ in range(length_of_string))
-        request_body = {
-            'cancelReason': reason,
-            'cancelAmount' : cancelAmount,
-        }
-
-        headers = {
-            'Authorization': 'Basic dGVzdF9za19CRTkyTEFhNVBWYkoxUjZiWkRXVjdZbXBYeUpqOg==',
-            'Content-Type': 'application/json;UTF-8',
-        }
-
-        try:
-            res= requests.post(headers=headers,
-                                 url=invoke_url + pkey +'/cancel',
-                                 data=json.dumps(request_body).encode('UTF-8'))
-
-            pay_data = res.json() #json.loads(res)
-            #print(f"Cancel Response::: {pay_data}")
-        except Exception as e:
-            print(f"Cancel Ack Error::{e}")
-            return redirect('/interviews/purchase/request')
-        
-
-        #for purch in plist:
-        #    Purchase.objects.filter(pk=purch.pk).update(usable='true')
-
-        return render(
-            request,
-            'interviews/paysuccess.html',
-            {
-                #'orderName': pay_data.orderName,
-                'orderAmount': pay_data['totalAmount'],
-            }
-        )
-
-
-def pay_success(request):
-    if request.method == 'GET':
-        oid = request.GET['orderId']      
-        pkey = request.GET['paymentKey']
-        amt = request.GET['amount']
-        mgr = Manager.objects.filter(mid=request.user).get()
-        
-
-        paid_time = mgr.paid_time
-        max_time = mgr.max_time
-        expire_at = mgr.expire_at
-        plist = Purchase.objects.filter(orderID=oid) #orderID 주문 금액의 합계가 amount 와 같은지 비교 
-        owner = User.objects.get(pk=plist[0].owner_id)
-        sum = 0
-        sumTime = 0
-        msg =''   
-        for purch in plist:
-            if purch.amount== 60:
-                sum = sum + 5500 * purch.coupon_count
-                msg += '[1시간권]'
-            elif purch.amount == 240:
-                sum = sum + 4*4950 * purch.coupon_count
-                msg += '[4시간권]'
-            elif purch.amount == 600:
-                sum = sum + 10*4400 * purch.coupon_count
-                msg += '[10시간권]'
-            elif purch.amount == 1:
-                sum = sum + 100 * purch.coupon_count
-                msg += '[1분권]'              
-        if str(sum) != amt:
-            print(f"Total Price is incorrect!! sum={sum}, amount ={amt}")
-            return redirect('/interviews/purchase/request')            
-        
-        msg += f", {sum}원, {owner.username}"
-
-        invoke_url = 'https://api.tosspayments.com/v1/payments/'
-        # length_of_string = 8
-        # rstr=''.join(random.choice(string.ascii_letters + string.digits) for _ in range(length_of_string))
-        request_body = {
-            'orderId': oid,
-            'amount' : amt,
-        }
-
-        # Take environment variables from .env file
-        env = environ.Env(
-            # set casting, default value
-            DEBUG=(bool, False)
-        )        
-        environ.Env.read_env(os.path.join(BASE_DIR, '.env'))        
-        #skey = f"{env('SECRET_KEY')}:"
-        sec_key = env('SECRET_KEY')
-        #print(f"Secret from environ: {skey}")
-        sec_key = f"{sec_key}:"
-        sec_key = sec_key.encode("utf-8")
-        sec_key = base64.b64encode(sec_key).decode("utf-8")
-
-        secret_key =f"Basic {sec_key}"
-        #print(f"Secret key: {sec_key}")
-        headers = {
-            #'Authorization': 'Basic dGVzdF9za19CRTkyTEFhNVBWYkoxUjZiWkRXVjdZbXBYeUpqOg==',
-            #'Authorization': 'Basic base64("test_sk_jZ61JOxRQVEEggz5JL0VW0X9bAqw:")',
-            'Authorization': secret_key,
-            'Content-Type': 'application/json;UTF-8',
-        }
-        try:
-            res= requests.post(headers=headers,
-                                 url=invoke_url + pkey,
-                                 data=json.dumps(request_body).encode('UTF-8'))
-
-            pay_data = res.json() #json.loads(res)
-            #print(f"PayResponse::: {pay_data}")
-        except Exception as e:
-            print(f"Order Ack Error::{e}")
-            return redirect('/interviews/purchase/request')
-        
-        for purch in plist:
-            user_list = json.loads(purch.user_list)
-            user_list.append(request.user.username)
-            used_count = 1            
-            
-            if purch.type == 'months':
-                max_time = purch.amount * purch.coupon_count
-                expire_at = date.today() + timedelta(days=31)
-            elif purch.type == 'hours':
-                sumTime = sumTime + (purch.amount * purch.coupon_count)
-            
-            Purchase.objects.filter(pk=purch.pk).update(user_list=json.dumps(user_list, ensure_ascii=False), used_count=used_count, paymentKey=pkey, usable='true')
-        
-        paid_time = paid_time + sumTime
-        Manager.objects.filter(mid=request.user).update(max_time= max_time, paid_time= paid_time, expire_at= expire_at)
-            
-        mgr = Manager.objects.filter(mid=request.user).get()
-
-        bot = telegram.Bot(token='1631327665:AAEX8hykT_WuTjQXWYnxigN1jM1WBqHAip4')
-        bot.sendMessage(chat_id=-1001681320740, text=msg)
-
-        return render(
-            request,
-            'interviews/paysuccess.html',
-            {
-                #'orderName': pay_data.orderName,
-                'addTime' : sumTime,
-                'message' : 'success',
-                'manager' : mgr,                
-                'orderAmount': pay_data['totalAmount'],
-
-            }
-        )
-
-
-def nologin(request, id):
-    logout(request)
-    try:
-        ruser = User.objects.get(username=id)
-    except ObjectDoesNotExist:
-        return redirect('/interviews/list/norm')
-
-    cuser = authenticate(username=ruser.username, password='finger.ai2021')
-    #cuser = get_user_from_hash(ruser.password)
-
-    #cuser = request.user
-
-    if cuser is not None:
-        #request.user = ruser
-        login(request, cuser)
-        try:
-            res = Manager.objects.get(mid=ruser)
-        except ObjectDoesNotExist:
-            #res = Manager.objects.create(mid=request.user, use_time=0, max_time=300)   # 300 minutes
-            res = Manager.objects.create(mid=ruser, use_time=0, max_time=0, paid_time=60)  # 300 minutes
-
-        if date.today() >= res.expire_at:
-            Manager.objects.filter(mid=ruser).update(use_time=0, max_time=0)
-
-    return redirect('/interviews/list/norm')
 
 
 #internal access
@@ -1651,6 +531,7 @@ def clientlist(request, msg):
         nums_speaker = request.POST.get("nums_speaker")
         client_name = request.POST.get("client_name")
         stt_lang = request.POST.get("stt_lang")
+        stt_engine = request.POST.get("stt_engine")
 
         if not title:
             title = "대화녹음_"+datetime.now().strftime('%Y%m%d-%H-%M-%S')
@@ -1668,7 +549,7 @@ def clientlist(request, msg):
             clt = Client.objects.create(name='고객미정', counselor=cuser)
 
         speaker_nums= nums_speaker #2
-        ret, pauthor, get_data, group_sent, timestr, sentimental, intv_duration, speakers, all_confidence = InterviewAnalysis(cuser, speaker_nums, intv.file_upload.name, stt_lang)
+        ret, pauthor, get_data, group_sent, timestr, sentimental, intv_duration, speakers, all_confidence = InterviewAnalysis(cuser, speaker_nums, intv.file_upload.name, stt_lang, stt_engine)
 
         if ret == -1:
             print(f'Return Fail')
@@ -2512,7 +1393,7 @@ def get_play_time(filename):
 
 class InterviewsCreate(CreateView):
     model = Interviews
-    fields = ['title', 'client_name', 'file_upload', 'nums_speaker', 'stt_lang']
+    fields = ['title', 'client_name', 'file_upload', 'nums_speaker', 'stt_lang', 'stt_engine']
     #fields = ['title', 'client_name', 'object_path', 'nums_speaker', 'stt_lang']
 
     def get_context_data(self, **kwargs):
@@ -2561,8 +1442,17 @@ class InterviewsCreate(CreateView):
 
         form.instance.client = clt
 
-        ret, pauthor, get_data, group_sent, timestr, sentimental, intv_duration, speakers, all_confidence = \
+        print(f"Stt Lang:: {form.instance.stt_lang}")
+
+
+        if form.instance.stt_engine == 'vito':
+            ret, pauthor, get_data, group_sent, timestr, sentimental, intv_duration, speakers, all_confidence = \
+            InterviewVitoAnalysis(cuser, form.instance.nums_speaker, form.instance.file_upload.name, "ko-KR")     
+        else: #form.instance.stt_engine == 'naver':
+            ret, pauthor, get_data, group_sent, timestr, sentimental, intv_duration, speakers, all_confidence = \
             InterviewAnalysis(cuser, form.instance.nums_speaker, form.instance.file_upload.name, form.instance.stt_lang)
+            #speakers = json.dumps(speakers).replace('false', r'"false"').replace('true', r'"true"')
+
 
         if ret == -1:
             return redirect("/interviews/create/fail/")
@@ -2598,7 +1488,7 @@ class InterviewsCreate(CreateView):
         except Exception as e:
             print(f"Object Store Error Message::{e}")
 
-        speakers = json.dumps(speakers).replace('false', r'"false"').replace('true', r'"true"')
+        speakers = json.dumps(speakers).replace(r"'false'", r'"false"').replace(r"'true'", r'"true"')
 
         form.instance.gd_cmk = gd_mac
         form.instance.gs_cmk = gs_mac
@@ -2616,6 +1506,7 @@ class InterviewsCreate(CreateView):
 
         response = super(InterviewsCreate, self).form_valid(form)
         return response
+
 
 
 def InterviewAnalysis(cuser, nums_speaker, file_upload_name, stt_lang):
@@ -2643,7 +1534,7 @@ def InterviewAnalysis(cuser, nums_speaker, file_upload_name, stt_lang):
 
     try:
         res = ClovaSpeechClient().req_upload(file=u'./_media/{}'.format(file_upload_name),
-                                             completion='sync', diarization=diarize_set, stt_lang=stt_lang)
+                                            completion='sync', diarization=diarize_set, stt_lang=stt_lang)
         #print(f"ClovaRes:{res}")
         get_data = json.loads(res.text)
         #print(f"Analysis:{get_data}")
@@ -2658,9 +1549,7 @@ def InterviewAnalysis(cuser, nums_speaker, file_upload_name, stt_lang):
         # print(f"Res.text::{get_data['result']}")
         # return redirect("/interviews/create/fail/")
         return -1, '','','','','','',''
-
     seg_len = len(get_data['segments'])
-
 
 
     # cs = ClovaSentimental()  # disaple sentence setimental analysis
@@ -2780,10 +1669,195 @@ def InterviewAnalysis(cuser, nums_speaker, file_upload_name, stt_lang):
             for ti in group_sent:
                 if(key==ti['speaker']):
                     cc = cc + ti['sentence'] + '\n'
-            
-            with open(f"./sample_data_{key}.txt", "w") as f:
-                f.write(cc)
+             
+            nouns = nlp.nouns(cc.replace('\n', ''))
+            ft_nouns = [each_word for each_word in nouns
+                        if each_word not in stop_words]
+            ncount = Counter(ft_nouns)
+            nfreq = ncount.most_common(10)
+            palettes = ['spring', 'summer', 'seismic', 'PuBu', 'winter']
 
+            try:
+                wordcloud = WordCloud(width=400, height=300, margin=20, font_path='./interviews/font/NanumGothic.ttf',
+                                      background_color='white',
+                                      # wordcloud = WordCloud(font_path='./interviews/font/NanumGothic.ttf', background_color='white',
+                                      colormap=palettes[3]).generate_from_frequencies(dict(ncount))
+                #                      colormap='winter', stopwords=stop_words).generate_from_frequencies(dict(ncount))
+
+                wc_file = MEDIA_ROOT + "\interviews\img\svgfile_" + key + "_" + timestr + '.svg'
+                sentimental[key]['wc_svg'] = '/media/interviews/img/svgfile_' + key + "_" + timestr + '.svg'
+
+                plt.figure(figsize=(4, 3))
+                plt.imshow(wordcloud)
+                plt.axis('off'), plt.xticks([]), plt.yticks([])
+                plt.tight_layout()
+                plt.subplots_adjust(left=0, bottom=0, right=1, top=1, hspace=0, wspace=0)
+
+                # plt.savefig(wc_file, pad_inches=0, format="svg")
+                plt.savefig(wc_file, dpi=700, format="svg")
+
+                sentimental[key]["type_count"] = len(ncount)
+
+                for i in nfreq:
+                    sentimental[key]["word_freq"][i[0]] = i[1]
+
+            except Exception as e:
+                print(f"WC Error Message::{e}")
+
+    intv_duration = get_data['segments'][-1]['end']
+    intv_duration = math.ceil(intv_duration/60000)
+    use_time = pauthor.use_time + intv_duration #play_time
+    paid_time = pauthor.paid_time
+    if use_time > pauthor.max_time:
+        if pauthor.paid_time <= 0:
+            return -2, '','','','','','',''
+        else :
+            paid_time = pauthor.paid_time - (use_time-pauthor.max_time)
+            use_time = pauthor.max_time
+
+    accum_time = pauthor.accum_time + intv_duration #play_time
+    Manager.objects.filter(mid=cuser).update(use_time=use_time, accum_time=accum_time, paid_time=paid_time)
+
+    #rget_data = json.dumps(get_data, ensure_ascii=False)
+    #rgroup_sent = json.dumps(group_sent, ensure_ascii=False)
+    #rsentimental = json.dumps(sentimental, ensure_ascii=False)
+
+    return 1, pauthor, get_data, group_sent, timestr, sentimental, intv_duration, speakers, all_confidence
+
+
+
+
+def InterviewVitoAnalysis(cuser, nums_speaker, file_upload_name, stt_lang):
+    try:
+        pauthor = Manager.objects.filter(mid=cuser).get()    # cuser = self.request.user
+    except ObjectDoesNotExist:
+        pauthor = Manager.objects.create(mid=cuser, use_time=0, max_time=300)   # 300 minutes   millisec * 60000
+
+    group_sent = []
+    sentimental = dict()
+    speakers = [{"label":"0","name":"A","edited":"false"},{"label":"1","name":"B","edited":"false"}]
+    try:
+        res = vito_auto_process(u'./_media/{}'.format(file_upload_name))
+        get_data = res['results']['utterances']
+
+        spklen = get_data[-1]['start_at'] + get_data[-1]['duration']
+
+        all_confidence = 0
+        #print(f"Analysis::{speakers}")
+        #speakers = json.dumps(speakers).replace('false', r'"false"').replace('true', r'"true"')
+        #speakers = json.loads(speakers)
+    except Exception as e:
+        print(f"Error Message::{e}")
+        # print(f"Res.text::{get_data['result']}")
+        # return redirect("/interviews/create/fail/")
+        return -1, '','','','','','',''
+    seg_len = len(get_data)
+
+
+    # cs = ClovaSentimental()  # disaple sentence setimental analysis
+
+    # 스피커 별 문장 개수 카운드 변수
+    stn_no_speaker = {}
+    for i in range(len(speakers)):
+        stn_no_speaker[speakers[i]["label"]] = 0
+
+    prev_speaker = 'superman'
+    #prev_speaker = get_data['segments'][0]['speaker']['label']
+    group_idx = 0
+
+
+    if get_data[0]['msg'] == '':
+        get_data[0]['msg'] = '공백'
+
+
+    for i in range(seg_len):
+        #xls_col = 1
+        cur_text = get_data[i]['msg']
+
+        if cur_text == '': continue
+
+        s1 = get_data[i]['spk']
+
+        if s1 == 11 :
+            s1 = 1
+
+        speaker = str(s1) #str(get_data[i]['spk'])
+        start_time = get_data[i]['start_at']
+        end_time = get_data[i]['start_at'] + get_data[i]['duration']
+        sent_confidence = 0
+        #################################
+        # for sentimental
+        ###################################
+        if speaker not in sentimental:
+            sentimental[speaker] = dict()
+            sentimental[speaker] = {"word_count": 0, "speak_len": 0, "speed": 0, "speak_rate": 0, "senti": "unknown",
+                                    "pos_count": 0, "neg_count": 0, "type_count": 0, "word_freq": {}, "wc_svg": ''}
+
+        group_sent.append({"speaker": speaker, "name": chr(ord(speaker) + 17), "sentence": cur_text, "first_sentence": "false",
+                            "quiet_time": 0, "start": start_time, "end": end_time, "senti": "None", "sent_no": 0, "confidence": sent_confidence})
+
+        if prev_speaker != speaker:
+            stn_no_speaker[speaker] = stn_no_speaker[speaker] + 1
+            prev_speaker = speaker
+            group_sent[group_idx]["first_sentence"] = "true"
+
+        group_sent[group_idx]["sent_no"] = stn_no_speaker[speaker]
+
+        if i != 0:
+            group_sent[group_idx]["quiet_time"] = round((group_sent[group_idx]["start"] - group_sent[group_idx-1]["end"])/1000)
+        else:
+            group_sent[group_idx]["quiet_time"] = 0
+
+        group_idx = group_idx + 1
+
+        #################################
+        # for sentimental analysis module
+        ###################################
+
+        sentimental[speaker]['word_count'] = sentimental[speaker]['word_count'] + cur_text.count(' ') + 1
+            #len(get_data['segments'][i]['words'])
+        sentimental[speaker]['speak_len'] = sentimental[speaker]['speak_len'] + get_data[i]['duration']
+
+
+    nlp = Okt()
+    # nlp = Hannanum()
+    timestr = datetime.now().strftime('%Y-%m-%d-%H+%M+%S')
+
+    # 불용어 처리
+    with open("./interviews/stopwords_korean.txt", "rt", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    # txt 읽을 때 \n표시를 제거
+    stop_words = []
+    for line in lines:
+        line = line.replace('\n', '')
+        stop_words.append(line)
+
+    for key, value in sentimental.items():
+        if value['pos_count'] > value['neg_count']:
+            sentimental[key]['senti'] = "positive"
+        else:
+            sentimental[key]['senti'] = "negative"
+
+        # sentimental[key]["speed"] = (sentimental[key]['word_count']*60000)/sentimental[key]['speak_len']
+        chr_len = 0
+        for ti in group_sent:
+            if (key == ti['speaker']):
+                chr_len = chr_len + len(ti['sentence'])
+        #for ti in cont4s[key] :
+        #    chr_len = chr_len + len(ti)
+
+        sentimental[key]['speed'] = (chr_len * 60000) / sentimental[key]['speak_len']
+        sentimental[key]['speak_rate'] = sentimental[key]['speak_len'] / spklen
+
+        # for word cloud
+        if stt_lang == 'ko-KR':
+            cc = ''
+            for ti in group_sent:
+
+                if(key==ti['speaker']):
+                    cc = cc + ti['sentence'] + '\n'
+             
             nouns = nlp.nouns(cc.replace('\n', ''))
             ft_nouns = [each_word for each_word in nouns
                         if each_word not in stop_words]
@@ -2819,8 +1893,7 @@ def InterviewAnalysis(cuser, nums_speaker, file_upload_name, stt_lang):
                 print(f"WC Error Message::{e}")
 
 
-    #intv_duration = get_data['segments'][seg_len-1]['end']
-    intv_duration = get_data['segments'][-1]['end']
+    intv_duration = get_data[-1]['start_at'] + get_data[-1]['duration']
     intv_duration = math.ceil(intv_duration/60000)
     use_time = pauthor.use_time + intv_duration #play_time
     paid_time = pauthor.paid_time
@@ -2833,10 +1906,6 @@ def InterviewAnalysis(cuser, nums_speaker, file_upload_name, stt_lang):
 
     accum_time = pauthor.accum_time + intv_duration #play_time
     Manager.objects.filter(mid=cuser).update(use_time=use_time, accum_time=accum_time, paid_time=paid_time)
-
-    #rget_data = json.dumps(get_data, ensure_ascii=False)
-    #rgroup_sent = json.dumps(group_sent, ensure_ascii=False)
-    #rsentimental = json.dumps(sentimental, ensure_ascii=False)
 
     return 1, pauthor, get_data, group_sent, timestr, sentimental, intv_duration, speakers, all_confidence
 

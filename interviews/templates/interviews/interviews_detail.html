@@ -52,23 +52,6 @@ textarea.autosize
     </div>
     <div class="dropdown col-12 col-lg-7">
 
-        <button id="vbutton" type="button" class="btn btn-info rounded-pill dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="margin-top: 3px; font-size:small; padding:2">
-        <i class="dripicons-document" ></i><a1 id="btext">축어록생성</a1></button>
-        <div class="dropdown-menu px-4 py-3" >
-                <div class="mb-2" >
-                    <label class="form-label">파일포맷선택</label>
-                    <select class="form-select" id="doc_type">
-                        <option  value="hwp" selected>HWP</option>
-                        <option  value="doc" selected>MS-Word</option>
-                    </select>
-                </div>
-                <div class="row"><button id="verba_button" class="btn btn-info rounded-pill" style="margin-top: 2px; font-size:small; padding:1" onclick="verbatimGen();" >
-                <i class="mdi mdi-wrench"></i>다운로드</button></div>
-        </div>
-
-
-
-
         <button type="button" class="btn btn-info rounded-pill dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="margin-top: 3px; font-size:small; padding:3">
         <i class="mdi mdi-wrench"></i>상담이동
         </button>
@@ -146,18 +129,6 @@ textarea.autosize
         <i class="dripicons-document" ></i>내용저장</button>
 
     </div>
-    <div class="col-7">
-        <div class="row">
-            <lable class="col-4 col-form-label text-right" style="font-size:small;"><b>침묵설정</b></lable>
-
-            <div class="col-3">
-            <input class="form-control px-1" type="number" value="{{ interviews.quiet_basis }}" min="0" id="quiet_basis" >
-            </div>
-            <div class="col-3 ml-0 px-1">
-                <button class="btn btn-success btn-sml" onclick="quiet_sent();" style="margin-top: 3px; font-size:small; padding:3;">적용</button>
-            </div>
-        </div>
-    </div>
 
 </div>
 
@@ -181,12 +152,6 @@ textarea.autosize
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.1/howler.min.js"></script>
 <script type="text/javascript">
-
-//var audio = new Audio('/media/{{ interviews.file_upload.name }}');
-//aud = document.getElementById("audioID");
-//aud = document.createElement('audio');
-//aud.setAttribute("src","/media/{{ interviews.file_upload.name }}");
-
 
 var aud;
 
@@ -249,13 +214,6 @@ function changeMode() {
     }
 }
 
-/*
-window.onbeforeunload = function() {
-    localStorage.setItem("media_src", msrc)
-    localStorage.setItem("audio_src", aud)
-}
-*/
-
 window.onload = function() {
     
     if ( "{{ interviews.file_upload }}"!='') {
@@ -264,16 +222,13 @@ window.onload = function() {
     else msrc = "https://kr.object.ncloudstorage.com/fingerai-dev/{{ interviews.object_path }}";   
 
     aud = new Howl({
-    //src: ["https://kr.object.ncloudstorage.com/fingerai-dev/data/interviews/files/2022/06/17/G_Flat.mp3"],
     src: msrc,
-    // html5: true,
     volume: 1.0
     });
 
     aud.on('load', function(){
         console.log('Audio Loaded');
         $('#voice_load').attr("style","display:none;")
-    // $('#voice_load').html("<strong>음성파일 로드완료</strong>");
     });
 
     aud.on('loaderror', function(){
@@ -281,10 +236,7 @@ window.onload = function() {
         $('#voice_load').attr("class","alert alert-danger col-4")
         $('#voice_load').html("<strong>&nbsp;&nbsp;음성이 지원되지 않는 파일입니다.</strong>");
     });  
-
-
-    
-   // sents = '{{ intv_sentence }}'.replace(/&quot;/g,'"').replace(/&#39;/g,'"').replace(/&#x27;/g,'"')
+   
     sents = '{{ intv_sentence }}'.replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&#x27;/g,"'")
 
     sents = JSON.parse(sents);
@@ -295,7 +247,6 @@ window.onload = function() {
         good_sent('edit');
     }
 
-   // role_view2();
     submit_name();
     submit_diaz();
 
@@ -310,16 +261,9 @@ function blobToFile(theBlob, fileName){
     return new File([theBlob], fileName, { lastModified: new Date().getTime(), type: theBlob.type })
 }
 
-function quiet_sent()
-{
-    if ( '{{ mode }}' == 'view') { good_sent('view'); }
-    else if  ( '{{ mode }}' == 'edit') { good_sent('edit'); }
-}
-
 function loadFile(fpath) {
 
   var result = null;
-  //filePath = '..\\..\\'+fpath.substring(fpath.indexOf('media'));
   var xmlhttp = new XMLHttpRequest();
   xmlhttp.open("GET", filePath, false);
   xmlhttp.send();
@@ -329,43 +273,12 @@ function loadFile(fpath) {
   return result;
 }
 
-function verbatimGen() {
-    //var obj1= document.getElementById("vdown");
-    var obj1= document.getElementById("vbutton");
-    btext= document.getElementById("btext");
-
-    obj1.setAttribute('style','margin-top: 3px; font-size:small; padding:3; cursor:progress');
-    obj1.setAttribute('onclick','javascript:void(0);');
-    document.getElementById("vbutton").setAttribute("disabled","true");
-
-    btext.innerHTML =  '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>생성중...'
-
-    setTimeout(function(){
-        obj1.setAttribute('href','javascript:void(0);');
-    }, 10);
-
-    download();
-    //location.href = "/interviews/detail/view/{{ interviews.pk }}";
-}
-
-function download() {
-      var element = document.createElement('a');
-      var doc_type = $('#doc_type').val(); //'hwp';
-      element.setAttribute('href','/interviews/verbatim/'+doc_type+'/{{ interviews.pk }}/'+$('#quiet_basis').val());
-
-      document.body.appendChild(element);
-      element.click();
-
-}
-
 function submit_name() {
   $("#id_nameForm").submit(function(e){
-    //e.preventDefault();
+
     var formData1 =new FormData(document.getElementById("id_nameForm"));
-    //var formData =new FormData($("#id_nameForm")[0]);
+
     formData1.append('client_name',document.getElementById("id_client_name2").value);
-    //formData1.append('client_comment','{{ client_info.comment }}');
-    //formData1.append('speakers','{{ interviews.speakers }}');
 
     $.ajax({
         contentType : false,
@@ -386,23 +299,10 @@ function submit_name() {
 
 function submit_diaz() {
   $("#id_diazForm").submit(function(e){
-    //e.preventDefault();
+
     var formData2 =new FormData(document.getElementById("id_diazForm"));
     formData2.append('client_name','{{ client_info.name }}');
-    //formData2.append('client_comment','{{ client_info.comment }}');
     formData2.append('speakers','{{ interviews.speakers }}');
-
-    /*
-    formData2.append('role_label0','{{ interviews.role_label0 }}');
-    formData2.append('role_label1','{{ interviews.role_label1 }}');
-    formData2.append('role_label2','{{ interviews.role_label2 }}');
-    formData2.append('role_label3','{{ interviews.role_label3 }}');
-    formData2.append('role_label4','{{ interviews.role_label4 }}');
-
-    for(var i=0; i<speakers.length; i++) {
-        formData2.set('role_label'+i, document.getElementById("id_role_label"+i).value);
-    }
-    */
 
     var speakers_list = new Array();
 
@@ -460,13 +360,12 @@ function good_sent(mode) {
 
             output+='<div class="row"><div class="col-12 py-1 px-3 bg-light rounded" ondblclick="playat(' + i + ');">'
 
-            if ( 'confidence' in sents[i]) {
+            if ( 'confidence' in sents[i] && sents[i].confidence!=0) {
                 if(sents[i].confidence > 0.85) output+='<i class="fas fa-lightbulb fa-sm" style="color:#0d6ef4;"></i>&nbsp&nbsp'
                 else if (sents[i].confidence > 0.6) output+='<i class="fas fa-lightbulb fa-sm" style="color:#20c997;"></i>&nbsp&nbsp'
                 else output+='<i class="fas fa-lightbulb fa-sm" style="color:#ff5733;"></i>&nbsp&nbsp'
             }
 
-            if ( sents[i].quiet_time >= $('#quiet_basis').val()  && $('#quiet_basis').val() >0 )  output+= '<b>(침묵'+ sents[i].quiet_time + '초)&nbsp</b>'
             output+= sents[i].sentence + '</div>'
 
             output+= '</div>'
@@ -491,7 +390,7 @@ function good_sent(mode) {
 
             if ( ( sents[i].quiet_time >= $('#quiet_basis').val() ) && $('#quiet_basis').val() >0 )  output+= '<h4><span class="badge bg-info">침묵'+ sents[i].quiet_time + '초</span></h4>'
             output+= '<div class="row">'
-            if ( 'confidence' in sents[i]) {
+            if ( 'confidence' in sents[i]  && sents[i].confidence!=0 ) {
                 output+='<div class="col-1 pt-2">'
                 if(sents[i].confidence > 0.85) output+='<i class="fas fa-lightbulb fa-sm" style="color:#0d6ef4;"></i>&nbsp&nbsp'
                 else if (sents[i].confidence > 0.6) output+='<i class="fas fa-lightbulb fa-sm" style="color:#20c997;"></i>&nbsp&nbsp'
@@ -557,11 +456,6 @@ function iplayat(i) {
 
     aud.play();
 
-    /*
-    setTimeout(function() {
-      aud.stop();
-    }, dur);
-    */
 }
 
 function resize(obj) {
