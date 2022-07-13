@@ -4,7 +4,6 @@ finger.stt 는 음성인식 대화 서비스로서 인식된 음성으로 부터
 - 대화 분석 기능
 - 단어 분석 기능
 - 대화 편집 기능
-- 축어록 생성 기능
 - 화자 추가 및 편집 기능
 
 ![fingerstt01](https://user-images.githubusercontent.com/88182481/176337441-c43cf729-5124-400a-ab62-b18c18585fa4.png)
