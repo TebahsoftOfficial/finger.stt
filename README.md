@@ -38,6 +38,9 @@ finger.stt 는 음성인식 대화 서비스로서 인식된 음성으로 부터
 - 패키지 설치
 ```
 > pip install -r requirements.txt
+# 리눅스에서 경우 pywinpty 설치시 아래와 같은 에러시 rust 설치  참조: https://www.linuxcapable.com/ko/how-to-install-rust-on-ubuntu-20-04/
+# Cargo, the Rust package manager, is not installed or is not on PATH
+> conda install -c anaconda(or conda-forge) pywin32
 > pip install boto3==1.6.19
 > pip install python-dateutil==2.8.2
 ```
