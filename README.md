@@ -43,6 +43,7 @@ finger.stt 는 음성인식 대화 서비스로서 인식된 음성으로 부터
 > conda install -c anaconda(or conda-forge) pywin32
 > pip install boto3==1.6.19
 > pip install python-dateutil==2.8.2
+#konlpy 설치에 아래와 같은 Jpype 설치 필요. 참조 https://ingu627.github.io/tips/install_konlpy/
 ```
 
 - fingerai 폴더에 settings.py 파일 작성
