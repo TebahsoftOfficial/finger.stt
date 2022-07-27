@@ -233,7 +233,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 ```
 
-- .envs 파일 작성 및 각종 key 정보
+- .env 파일 작성 및 각종 key 정보
 - manage.py 와 같은 경로에 작성
 - 각종 key, id 정보를 환경변수로 작성 저장
 ```
