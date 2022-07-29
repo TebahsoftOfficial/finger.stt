@@ -286,6 +286,7 @@ openssl req -new -x509 -nodes -sha256 -days 365 -key test_django.key > test_djan
 ```
 > https://developers.kakao.com/console/app 접속 후
 > "내 애플리케이션" -> "애플리케이션 추가하기" 클릭 후 애플리케이션 작성
+> 앱설정 -> 플랫폼-> Web 에 사이트 도메인 등록 http://127.0.0.1
 > 작성된 앱 클릭 -> 요약정보 -> "REST API 키"를 복사하여 Social Accounts의 "client id"에 입력
 > 제품설정 -> 카카오 로그인 -> 보안 -> "Client Secret"-> "코드"를 복사하여 Social Accounts의 "Secret key"에 입력
 ```
