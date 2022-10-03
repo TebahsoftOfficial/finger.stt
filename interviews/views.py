@@ -76,6 +76,9 @@ import boto3  # pip install boto3==1.6.19
 from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 import pandas as pd
+from django.core.files.storage import FileSystemStorage
+import distance
+from rank_bm25 import BM25Okapi, BM25Plus
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -85,6 +88,24 @@ cyp_key = bytes([0x82, 0xC8, 0xA9, 0xC3, 0xD2, 0xE1, 0xF0, 0x3F, 0x28, 0x2d, 0x3
 aad = bytes([0x38, 0xA6, 0xB7, 0x08, 0xC9, 0xDA, 0x91, 0x82, 0x73, 0x64, 0x5B, 0x4C, 0x3D, 0x2E])
 nonce = bytes([0xF6, 0xE7, 0xD8, 0xC9, 0xB1, 0xA2, 0x93, 0x84, 0x75,  0x6A, 0x5B, 0x5C])  # 기본 12(96bit)byte이며 길이 변경 가능.
 
+def evalDoc(request):
+    efile = request.FILES['evalFile']
+    evalMethod = request.POST.get("evalMethod")
+    docu = request.POST.get("docu")
+
+    rstr = ''
+    #with open(efile, 'rb') as sent_file:
+    rdata = efile.read().decode('utf8')  #read
+    for data in rdata:
+        if(data!="\n"):        
+            rstr = rstr + data
+
+    similarity(request, evalMethod, docu, rstr)
+    #intv = Interviews.objects.get(id=docu)
+    #fs = FileSystemStorage()
+    #filename = fs.save("파일명.csv", efile)
+    return HttpResponse("Similarity Analysed")
+
 def cos_similarity(v1, v2):
     dot_product = v1 @ v2
     ab_norm = np.sqrt(sum(np.square(v1))) * np.sqrt(sum(np.square(v2)))
@@ -93,7 +114,7 @@ def cos_similarity(v1, v2):
     return similarity
 
 
-def similarity(request, engine, sid):
+def similarity(request, method, sid, label):
     doc_list = []
     intv = Interviews.objects.get(id=sid)
     with open(intv.content, 'rb') as sent_file:
@@ -101,39 +122,66 @@ def similarity(request, engine, sid):
         sent_data = dec(cyp_key, aad, nonce, rdata, intv.gd_cmk)
     sent_data = binary_to_dict(sent_data)
     
-    if engine=='naver':
-        doc_list.append(sent_data['text'])
-    elif engine=='vito':
+    if intv.stt_engine=='naver':
+        sdata = sent_data['text'].replace('\r',' ')
+        doc_list.append(sdata)
+    elif intv.stt_engine=='vito':
         tstr = ''
         for st in sent_data:
             tstr = tstr + st['msg'] + ' '
+        tstr = tstr.replace('\r',' ')
         doc_list.append(tstr)
 
-    print(doc_list)
-    rstr = ''
-    with open(os.path.join(BASE_DIR, 'interviews')+'\label1.txt', 'rt',encoding="utf-8") as sent_file:
-        rdata = sent_file.readlines()
+    label = label.replace('\r',' ')
+    doc_list.append(label)
 
-    for data in rdata:
-        if(data!="\n"):
-            rstr = rstr + data
-    doc_list.append(rstr)
+    if method == 'tfidf' or method == 'count' or method == 'hashing':
+        if method == 'tfidf':
+            tfidf_vect = TfidfVectorizer()
+        elif method == 'count':
+            tfidf_vect = CountVectorizer()
+        elif method == 'hashing':
+            tfidf_vect = HashingVectorizer()
+        feature_vect = tfidf_vect.fit_transform(doc_list)
+        # Sparse Matrix형태를 Dense Matrix로 변환
+        feature_vect_dense = feature_vect.todense() # toarray()도 가능
 
-    tfidf_vect = TfidfVectorizer()
-    feature_vect = tfidf_vect.fit_transform(doc_list)
+        # 첫 번째, 두 번째 문서 피처 벡터 추출
+        vect1 = np.array(feature_vect_dense[0]).reshape(-1,)
+        vect2 = np.array(feature_vect_dense[1]).reshape(-1,)
+        print(f"\nSTT 처리문서 feacture vector:\n {vect1[0:20]}....\n")
+        print(f"Label 문서(정답지) feacture vector:\n {vect2[0:20]}...")    
+        # 코사인 유사도 
+        similarity_simple = cos_similarity(vect1, vect2 )           
+    elif method == 'hamming':
+        ltokenize = [doc_list[1].split(" ")]
+        qtokenize = doc_list[0].split(" ")
+        print(f"ltokenNize\n {ltokenize}")        
+        print(f"QtokenNize\n {qtokenize}")
+        bm25_vect = BM25Okapi(ltokenize)
+        bm25_result = bm25_vect.get_scores(qtokenize)
+        print(f"Bm25=> {bm25_result}")
+        similarity_simple = bm25_result[0]
 
-    # Sparse Matrix형태를 Dense Matrix로 변환
-    feature_vect_dense = feature_vect.todense() # toarray()도 가능
 
-    # 첫 번째, 두 번째 문서 피처 벡터 추출
-    vect1 = np.array(feature_vect_dense[0]).reshape(-1,)
-    vect2 = np.array(feature_vect_dense[1]).reshape(-1,)
-    print(f"\nSTT 처리문서 feacture vector:\n {vect1[0:20]}....\n")
-    print(f"Label 문서(정답지) feacture vector:\n {vect2[0:20]}...")    
-    # 코사인 유사도 
-    similarity_simple = cos_similarity(vect1, vect2 )
-    print(f"\nSTT 처리문서와 Label 문서 Cosine 유사도: {similarity_simple:.3f}\n")
+    elif method == 'bm25plus':
+        ltokenize = doc_list[1].split(" ")
+        qtokenize = doc_list[0].split(" ")
+        bm25_vect = BM25Plus()
+        similarity_simple = bm25_vect.get_scores(qtokenize)        
+
  
+    '''
+    if method == 'tfidf':
+        similarity_simple = cos_similarity(vect1, vect2 )
+    elif method == 'hamming':
+        similarity_simple = float(distance.hamming(vect1, vect2)/1000)        
+    elif method == 'jaccard':
+        similarity_simple = distance.jaccard(vect1, vect2)
+    '''
+    #print(f"\nSTT 처리문서와 Label 문서 {method} 유사도: {similarity_simple:.3f}\n")
+    print(f"\nSTT 처리문서와 Label 문서 {method} 유사도: {similarity_simple}\n")
+
     return render(
         request,
         'interviews/interviews_realtime.html',
@@ -144,6 +192,95 @@ def RealtimeInterviews(request):
         request,
         'interviews/interviews_realtime.html',
     )  
+
+def RealtimeSave(request):
+    current_user = request.user
+    if not current_user.is_authenticated:
+        return redirect('/interviews/')
+    gen_idx = -1
+    gen_sentences = []
+
+    org_sent = dict()
+
+    if request.method == "POST":
+
+        all_sentence = request.POST.get("all_sentence")
+        quiet_basis = 0#request.POST.get("quiet_basis")
+        title = request.POST.get("title")
+
+        all_sentence = json.loads(all_sentence)
+
+        stn_no_speaker = {}
+        prev_speaker = 'superman'
+        context={'result':'','msg':''}
+
+        speakers = [{"label": "0", "name": "A", "edited": "false"}, {"label": "1", "name": "B", "edited": "false"},{"label": "2", "name": "C", "edited": "false"}]
+        group_sent = []
+        sentimental = dict()
+        all_confidence = 0
+        group_idx = 0
+
+        for si in range(len(speakers)):
+            stn_no_speaker[speakers[si]["label"]] = 0
+
+        i = 0
+        for sent in all_sentence:
+
+            if sent['generated'] == 'false':
+                gen_idx = gen_idx + 1
+
+            fspk = sent['speaker']
+
+            gen_sentences.append({})
+            gen_sentences[i]['sentence'] = sent['sentence']
+            gen_sentences[i]['speaker'] = fspk
+            sindex = next((index for (index, d) in enumerate(speakers) if d["label"] == fspk), None)
+
+            print(f"Sindex:{sindex}, fspk:{fspk}, i:{i}, gen_sentence:{gen_sentences[i]}")    
+            gen_sentences[i]['name'] = speakers[sindex]['name']
+
+            speaker = gen_sentences[i]['speaker']
+
+            if prev_speaker != speaker:
+                stn_no_speaker[speaker] = stn_no_speaker[speaker] + 1
+                prev_speaker = speaker
+                gen_sentences[i]['first_sentence'] = "true"
+            else :
+                gen_sentences[i]['first_sentence'] = "false"
+
+            gen_sentences[i]["sent_no"] = stn_no_speaker[speaker]
+            i = i + 1
+
+        try:
+            gs_cyp, gs_mac = enc(cyp_key, aad, nonce, dict_to_binary(gen_sentences))
+
+        except Exception as e:
+            print(f"SentenceUpdate Encryp Error::{e}")
+            context['result'] ='fail'
+            context['msg'] = "SentenceUpdate Encryp Error"
+            #return HttpResponse("SentenceUpdate Encryp Error")
+            return JsonResponse(context)
+
+        try:
+            timestr = datetime.now().strftime('\%Y\%m\%d')
+            save_path = MEDIA_ROOT + f"\interviews\\files{timestr}\Realtime_{title}.faj"
+            with open(save_path, 'wb') as outfile1:
+                outfile1.write(gs_cyp)
+        except Exception as e:
+            print(f"SentenceUpdate Write Error::{e}")
+            context['result'] ='fail'
+            context['msg'] = "SentenceUpdate Write Error"            
+            #return HttpResponse("SentenceUpdate Write Error")
+            return JsonResponse(context)
+
+        intv = Interviews.objects.create(content=save_path, gs_cmk=gs_mac, quiet_basis= quiet_basis, title= title)
+
+        context['result'] ='pass'
+        context['msg'] = f"{intv.pk}"
+        #print(f"sentenceUpdate::{all_sentence[0]['speaker']}:{all_sentence[0]['sentence']}")
+        #return HttpResponse("{{intv.pk}}")    
+        return JsonResponse(context)
+
 
 def test_storage(request):
 

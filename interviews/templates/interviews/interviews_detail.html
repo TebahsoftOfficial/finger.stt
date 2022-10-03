@@ -110,6 +110,30 @@ textarea.autosize
 
 
         </div>
+
+        <button type="button" class="btn btn-info rounded-pill dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="margin-top: 3px; font-size:small; padding:3">
+        <i class="mdi mdi-wrench"></i>정확도측정
+        </button>
+        <div class="dropdown-menu px-4 py-3" >
+            <div class="mb-3" >
+                <label for="id_client_name2" class="form-label">측정방법선택</label>
+                <select class="form-select" id="id_evalMethod" name="client_name2">
+                    <option value="tfidf" selected>TfIdf</option>
+                    <option value="hamming">BM25</option>
+                    <option value="jaccard">BM25Plus</option>
+                </select>
+
+                <label for="id_label_file" class="form-label mt-2">레이블 파일</label>
+                <input type="file" class="form-control" name="label_file"  id="id_label_file" placeholder="레이블 파일" >                
+            </div>
+            <div class="row"><button id="button1" class="btn btn-info rounded-pill" style="margin-top: 34px; font-size:small; padding:3" onclick="evalSend();">
+            <i class="mdi mdi-wrench"></i>유사도 측정</button></div>
+            <form class="px-4 py-3" id="id_evalForm" method="post" style="display:none;"
+            enctype="multipart/form-data" name="evalForm">
+            {% csrf_token %}
+            </form>
+        </div>
+
     </div>
 </div>
 
@@ -127,8 +151,19 @@ textarea.autosize
         <i class="fa fa-exchange-alt"></i>뷰모드</button>
         <button id="sentsave" onclick="contentSave();" type="button" class="btn btn-success btn-sm" style="margin-top: 3px; font-size:small; padding:3; display:none;">
         <i class="dripicons-document" ></i>내용저장</button>
-
     </div>
+    <div class="col-7">
+        <div class="row">
+            <lable class="col-4 col-form-label text-right" style="font-size:small;"><b>침묵설정</b></lable>
+
+            <div class="col-3">
+            <input class="form-control px-1" type="number" value="{{ interviews.quiet_basis }}" min="0" id="quiet_basis" >
+            </div>
+            <div class="col-3 ml-0 px-1">
+                <button class="btn btn-success btn-sml" onclick="quiet_sent();" style="margin-top: 3px; font-size:small; padding:3;">적용</button>
+            </div>
+        </div>
+    </div>    
 
 </div>
 
@@ -261,6 +296,12 @@ function blobToFile(theBlob, fileName){
     return new File([theBlob], fileName, { lastModified: new Date().getTime(), type: theBlob.type })
 }
 
+function quiet_sent()
+{
+    if ( '{{ mode }}' == 'view') { good_sent('view'); }
+    else if  ( '{{ mode }}' == 'edit') { good_sent('edit'); }
+}
+
 function loadFile(fpath) {
 
   var result = null;
@@ -365,7 +406,7 @@ function good_sent(mode) {
                 else if (sents[i].confidence > 0.6) output+='<i class="fas fa-lightbulb fa-sm" style="color:#20c997;"></i>&nbsp&nbsp'
                 else output+='<i class="fas fa-lightbulb fa-sm" style="color:#ff5733;"></i>&nbsp&nbsp'
             }
-
+            if ( ( sents[i].quiet_time >= $('#quiet_basis').val() ) && $('#quiet_basis').val() >0 )  output+= '<b>(침묵'+ sents[i].quiet_time + '초)&nbsp</b>'
             output+= sents[i].sentence + '</div>'
 
             output+= '</div>'
@@ -588,6 +629,28 @@ function role_view2() {
 }
 
 
+function evalSend() {
+    var labelFile = $('#id_label_file')[0];
+    var formData =new FormData(document.getElementById("id_evalForm"));
+    formData.append('evalMethod', $('#id_evalMethod').val());
+    formData.append('evalFile', labelFile.files[0]);
+    formData.append('docu', '{{ interviews.pk }}');
+    $.ajax({
+        contentType : false,
+        processData : false,
+        data : formData,
+        url : "/interviews/evalDoc/",
+        type : 'POST',
+        success: function (data) {
+            console.log(data);
+            window.location.replace("/interviews/detail/view/{{ interviews.pk }}/");
+        },
+        error: function (xhr, status) {
+            alert(xhr + " : " + status);
+        }
+    });
+    return false;
+}
   </script>
 
 {% endblock %}

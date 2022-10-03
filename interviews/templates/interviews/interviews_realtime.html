@@ -48,15 +48,29 @@ textarea.autosize
       <span id="final" class="text-dark"></span>
     </div-->
     <div id="final">
-
     </div>
+    
     <span id="interim" class="text-secondary"></span>
+    
+    <p id="stop_time"></p>
+    <p id="end_time"></p>
+    
     <div class="mt-4">
       <button class="btn btn-success" id="start">Start</button>
       <button class="btn btn-danger" id="stop">Stop</button>
+      <button class="btn btn-danger" id="csave" onclick="contentSave();">내용 저장</button>      
       <p id="status" class="lead mt-3 text-light" style="display: none">Listenting ...</p>
     </div>
+
+
+
+    <div style="display:none;" id="idTable">
+      <form method="post" enctype="multipart/form-data" id="sentform" >
+          {% csrf_token %}
+      </form>
+  </div>    
     
+
 {% endblock %}
 
 {% block extra_javascript %}
@@ -127,6 +141,9 @@ function updateCountry() {
 window.addEventListener("DOMContentLoaded", () => {
     let select_language = document.querySelector('#select_language');
     let select_dialect = document.querySelector('#select_dialect');
+    let start_time = new Date();   
+    let stop = false;
+    let stop_time;
 
     for (var i = 0; i < langs.length; i++) {
       select_language.options[i] = new Option(langs[i][0], i);
@@ -162,6 +179,8 @@ window.addEventListener("DOMContentLoaded", () => {
     speechRecognition.onend = () => {
       // Hide the Status Element
       console.log("End speech")
+      if (stop == false) speechRecognition.start();
+      else if (stop == true) $('#csave').prop('disabled',false);
       document.querySelector("#status").style.display = "none";
     };
 
@@ -169,11 +188,16 @@ window.addEventListener("DOMContentLoaded", () => {
       // Create the interim transcript string locally because we don't want it to persist like final transcript
       let interim_transcript = "";
       let final_transcript = "";
-      let today = new Date();   
 
-      let hours = today.getHours(); // 시
-      let minutes = ('0'+today.getMinutes()).slice(-2);  // 분
-      let seconds = ('0'+today.getSeconds()).slice(-2);  // 초
+      let cur_time = new Date();
+      let elaps = cur_time - start_time;
+      let seconds = Math.floor(elaps/1000);
+      let minutes = Math.floor(seconds/60);
+      let hours = Math.floor(minutes/60);
+      //let hours = elaps.getHours(); 
+      //let minutes = ('0'+elaps.getMinutes()).slice(-2);  // 분
+      //let seconds = ('0'+elaps.getSeconds()).slice(-2);  // 초
+
       // Loop through the results from the speech recognition object.
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         // If the result item is Final, add it to Final Transcript, Else add it to Interim transcript
@@ -184,7 +208,7 @@ window.addEventListener("DOMContentLoaded", () => {
         }
       }
 
-      let speakers = ['lee','kim','choi']
+      let speakers = ['0','1','2']
       let output='<text>'+hours+':'+minutes+':'+seconds;
       output+= '<div class="row"><div class="col-1 pt-2"></div><div class="col-8">'
       output+= '<textarea class="isentence autosize">'
@@ -202,16 +226,33 @@ window.addEventListener("DOMContentLoaded", () => {
       //document.querySelector("#final").innerHTML = final_transcript;
       $('#final').append(output)
       document.querySelector("#interim").innerHTML = interim_transcript;
+
+      if (stop==true) {
+        s_seconds = Math.floor(stop_time/1000);
+        s_milli = stop_time%1000;
+        e_seconds = Math.floor(elaps/1000);
+        e_milli = elaps%1000;
+        //$('#end_time').html('Stop Time =>'+hours+':'+minutes+':'+seconds);        
+        $('#end_time').html('Stop Time =>'+s_seconds+'.'+s_milli
+          +'<br>Result Time=>'+e_seconds+'.'+e_milli);        
+      }
+
     };
 
     // Set the onClick property of the start button
     document.querySelector("#start").onclick = () => {
       // Start the Speech Recognition
+      $('#csave').prop('disabled',true);
+      stop = false;
       speechRecognition.start();
     };
     // Set the onClick property of the stop button
     document.querySelector("#stop").onclick = () => {
       // Stop the Speech Recognition
+      stop = true;
+      stop_time = new Date();
+      stop_time = stop_time - start_time;      
+      console.log("Rec STOP!")
       speechRecognition.stop();
     };
   } 
@@ -219,6 +260,51 @@ window.addEventListener("DOMContentLoaded", () => {
     console.log("Speech Recognition Not Available");
   }
 })
+
+function contentSave() {
+    var sentences = document.getElementsByClassName('isentence');
+    console.log("Sentence Length0:" + sentences.length)
+    var sentenceList = new Array() ;
+    for (var i=0; i<sentences.length; i++) {
+        var data = new Object() ;
+        oid = '.opts:eq(' + i + ') option:selected'
+        console.log(oid)
+        data.speaker = $(oid).val();
+        console.log(data.speaker);
+        data.sentence = sentences[i].value;
+        data.generated = sentences[i].getAttribute("gened");
+        sentenceList.push(data) ;
+    }
+    console.log("Sentence Length:" + sentences.length)
+    // String 형태로 변환
+    var jsonData = JSON.stringify(sentenceList) ;
+    var formData =new FormData(document.getElementById("sentform"));
+    formData.append('all_sentence',jsonData);
+    title = $('#id_title').val()
+    if (title == '') title = '제목없음'
+    formData.append('title', title);
+
+    $.ajax({
+        contentType : false,
+        processData : false,
+        data : formData,
+        url : "/interviews/RealtimeSave/",
+        type : 'POST',
+        datatype: 'json',    // 서버에서 반환되는 데이터 형식
+        success: function (data) {
+            console.log(data);
+            if (data.result=='pass')
+              location.href = "/interviews/detail/view/"+data.msg+"/";
+            else if (data.result=='fail')  
+              console.log(data.msg)
+        },
+        error: function (xhr, status) {
+            alert(xhr + " : " + status);
+        }
+    });
+    return false;
+}
+
 
 </script>
 

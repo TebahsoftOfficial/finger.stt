@@ -21,6 +21,7 @@ urlpatterns = [
     path('sentenceupdate/<str:pk>/', views.sentenceUpdate),
     path('addspeaker/<str:pk>/', views.addspeaker),
     path('inaction/', views.inaction),
-    path('realtime/',views.RealtimeInterviews)
-
+    path('realtime/',views.RealtimeInterviews),
+    path('RealtimeSave/', views.RealtimeSave),
+    path('evalDoc/',views.evalDoc),
 ]
