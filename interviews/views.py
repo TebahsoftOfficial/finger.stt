@@ -139,7 +139,7 @@ def similarity(request, method, sid, label):
         if method == 'tfidf':
             tfidf_vect = TfidfVectorizer()
         elif method == 'count':
-            tfidf_vect = CountVectorizer()
+            tfidf_vect = CountVectorizer()  # 유사도 측정 방법 카운트 벡터 활용
         elif method == 'hashing':
             tfidf_vect = HashingVectorizer()
         feature_vect = tfidf_vect.fit_transform(doc_list)
