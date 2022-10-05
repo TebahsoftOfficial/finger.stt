@@ -73,7 +73,7 @@ import telegram # pip install python-telegram-bot
 import boto3  # pip install boto3==1.6.19
 # python-dateutil 2.6.1  => 2.8.1
 
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer, HashingVectorizer
 import numpy as np
 import pandas as pd
 from django.core.files.storage import FileSystemStorage
@@ -149,15 +149,27 @@ def similarity(request, method, sid, label):
         # 첫 번째, 두 번째 문서 피처 벡터 추출
         vect1 = np.array(feature_vect_dense[0]).reshape(-1,)
         vect2 = np.array(feature_vect_dense[1]).reshape(-1,)
-        print(f"\nSTT 처리문서 feacture vector:\n {vect1[0:20]}....\n")
-        print(f"Label 문서(정답지) feacture vector:\n {vect2[0:20]}...")    
+        print(f"\nSTT 처리문서 feacture vector:\n {vect1}\n")
+        print(f"Label 문서(정답지) feacture vector:\n {vect2}")    
         # 코사인 유사도 
         similarity_simple = cos_similarity(vect1, vect2 )           
-    elif method == 'hamming':
+    elif method == 'bm25':
+        ''' for test
+        corpus = [
+            "Hello there good man!",
+            "It is quite windy in London",
+            "How is the weather today?"
+        ]
+        ltokenize = [doc.split(" ") for doc in corpus]
+        query = "windy London"
+        qtokenize = query.split(" ")
+        '''
+
         ltokenize = [doc_list[1].split(" ")]
         qtokenize = doc_list[0].split(" ")
-        print(f"ltokenNize\n {ltokenize}")        
-        print(f"QtokenNize\n {qtokenize}")
+
+        #print(f"ltokenNize\n {ltokenize}")        
+        #print(f"QtokenNize\n {qtokenize}")
         bm25_vect = BM25Okapi(ltokenize)
         bm25_result = bm25_vect.get_scores(qtokenize)
         print(f"Bm25=> {bm25_result}")
