@@ -238,16 +238,17 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 - manage.py 와 같은 경로에 작성
 - 각종 key, id 정보를 환경변수로 작성 저장
 ```
-DJANGO_KEY= Django key
-DB_NAME= MySQL 데이터베이스 네임
-DB_USER= MySQL 아이디
-DB_PWD= MySQL 암호
-CLOVA_INVOKE_URL=clova speech invoke url
-CLOVA_SECRET=clova speech secret
-NAVER_APIKEY_ID=naver api key, id
-NAVER_APIKEY=naver api id
-STORE_ACC_KEY=naver object storage access key
-STORE_SEC_KEY=naver object storage secret key
+# 반드시 환경변수='value' 붙여서 작성할것
+DJANGO_KEY=Django key
+DB_NAME=MySQL 데이터베이스 네임
+DB_USER=MySQL 아이디
+DB_PWD=MySQL 암호
+CLOVA_INVOKE_URL='' #clova speech invoke url
+CLOVA_SECRET='' #clova speech secret
+NAVER_APIKEY_ID='' #naver api key, id
+NAVER_APIKEY='' #naver api id
+STORE_ACC_KEY='' #naver object storage access key
+STORE_SEC_KEY='' #naver object storage secret key
 ```
 
 
