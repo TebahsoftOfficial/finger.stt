@@ -308,6 +308,9 @@ openssl req -new -x509 -nodes -sha256 -days 365 -key test_django.key > test_djan
 > Available sites 에서 127.0.0.1 선택
 ```
 
+- 데모사이트
+> [이곳에서 데모를 볼 수 있습니다.](https://118.67.132.111)
+
 
 
 
