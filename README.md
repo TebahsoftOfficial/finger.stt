@@ -239,9 +239,9 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 - 각종 key, id 정보를 환경변수로 작성 저장
 ```
 DJANGO_KEY= Django key
-DB_NAME = MySQL 데이터베이스 네임
-DB_USER=MySQL 아이디
-DB_PWD=MySQL 암호
+DB_NAME= MySQL 데이터베이스 네임
+DB_USER= MySQL 아이디
+DB_PWD= MySQL 암호
 CLOVA_INVOKE_URL=clova speech invoke url
 CLOVA_SECRET=clova speech secret
 NAVER_APIKEY_ID=naver api key, id
