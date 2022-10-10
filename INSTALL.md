@@ -238,16 +238,17 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 - manage.py 와 같은 경로에 작성
 - 각종 key, id 정보를 환경변수로 작성 저장
 ```
-DJANGO_KEY= Django key
-DB_NAME = MySQL 데이터베이스 네임
+# 반드시 환경변수='value' 붙여서 작성할것
+DJANGO_KEY=Django key
+DB_NAME=MySQL 데이터베이스 네임
 DB_USER=MySQL 아이디
 DB_PWD=MySQL 암호
-CLOVA_INVOKE_URL=clova speech invoke url
-CLOVA_SECRET=clova speech secret
-NAVER_APIKEY_ID=naver api key, id
-NAVER_APIKEY=naver api id
-STORE_ACC_KEY=naver object storage access key
-STORE_SEC_KEY=naver object storage secret key
+CLOVA_INVOKE_URL='' #clova speech invoke url
+CLOVA_SECRET='' #clova speech secret
+NAVER_APIKEY_ID='' #naver api key, id
+NAVER_APIKEY='' #naver api id
+STORE_ACC_KEY='' #naver object storage access key
+STORE_SEC_KEY='' #naver object storage secret key
 ```
 
 
@@ -306,6 +307,9 @@ openssl req -new -x509 -nodes -sha256 -days 365 -key test_django.key > test_djan
 > Secret key : 카카오에서 API Secret 생성 후 입력
 > Available sites 에서 127.0.0.1 선택
 ```
+
+- 데모사이트
+> [이곳에서 데모를 볼 수 있습니다.](https://118.67.132.111)
 
 
 
