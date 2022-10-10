@@ -19,7 +19,7 @@ Because each engine has the unique advantage for the specific area, developer sh
 In this open source, we use the common structure for the varous STT engines.
 It means that you adjusts a few source codes in this repository to use the other STT engines.
 
-![Common Structure](https://github.com/TebahSoft/finger.stt/blob/main/Common_Structure.png?raw=true)
+![Common Structure](https://github.com/TebahSoft/finger.stt/blob/main/Common_Structure.png| width=100)
 
 
 You can create simple SW using voice recognition technique.
