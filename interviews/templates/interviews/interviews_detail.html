@@ -41,9 +41,11 @@ textarea.autosize
     <div class="col-12 col-lg-5">
             {% if interviews.confidence != 0 and interviews.confidence != null %}
             <center>
+
             <span class="btn-secondary border-0 mb-0 px-1 py-1" role="alert" style="font-size:small; text-align: left;"
             data-bs-container="#tooltip-container2" data-bs-toggle="tooltip" data-bs-placement="right" title="-&nbsp;&nbsp;신뢰도를 향상시키는 TIP&nbsp;&nbsp;- *마이크 가까이, 주변소음제거 *여러명 동시발언 자제">
                 신뢰도 {{ interviews.confidence|div:10 }}</span>
+             <button type="button" class="btn-secondary border-0 mb-0 px-1 py-1" style="font-size:small; text-align: left;" id="similar">정확도 00.00</button>                
              <i class="fas fa-lightbulb fa-sm" style="color:#0d6ef4;">&nbsp;좋음</i>
                 <i class="fas fa-lightbulb fa-sm" style="color:#20c997;">&nbsp;보통</i>
                     <i class="fas fa-lightbulb fa-sm" style="color:#ff5733;">&nbsp;나쁨</i>
@@ -129,7 +131,7 @@ textarea.autosize
                 <input type="file" class="form-control" name="label_file"  id="id_label_file" placeholder="레이블 파일" >                
             </div>
             <div class="row"><button id="button1" class="btn btn-info rounded-pill" style="margin-top: 34px; font-size:small; padding:3" onclick="evalSend();">
-            <i class="mdi mdi-wrench"></i>유사도 측정</button></div>
+            <i class="mdi mdi-wrench"></i>정확도 측정</button></div>
             <form class="px-4 py-3" id="id_evalForm" method="post" style="display:none;"
             enctype="multipart/form-data" name="evalForm">
             {% csrf_token %}
@@ -645,7 +647,8 @@ function evalSend() {
         type : 'POST',
         success: function (data) {
             console.log(data);
-            window.location.replace("/interviews/detail/view/{{ interviews.pk }}/");
+            $('#similar').html("정확도 "+data);
+            //window.location.replace("/interviews/detail/view/{{ interviews.pk }}/");
         },
         error: function (xhr, status) {
             alert(xhr + " : " + status);

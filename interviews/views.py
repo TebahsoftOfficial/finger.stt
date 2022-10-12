@@ -100,11 +100,11 @@ def evalDoc(request):
         if(data!="\n"):        
             rstr = rstr + data
 
-    similarity(request, evalMethod, docu, rstr)
+    score = similarity(request, evalMethod, docu, rstr)*100
     #intv = Interviews.objects.get(id=docu)
     #fs = FileSystemStorage()
     #filename = fs.save("파일명.csv", efile)
-    return HttpResponse("Similarity Analysed")
+    return HttpResponse(f"{score:.2f}")
 
 def cos_similarity(v1, v2):
     dot_product = v1 @ v2
@@ -193,11 +193,13 @@ def similarity(request, method, sid, label):
     '''
     #print(f"\nSTT 처리문서와 Label 문서 {method} 유사도: {similarity_simple:.3f}\n")
     print(f"\nSTT 처리문서와 Label 문서 {method} 유사도: {similarity_simple}\n")
-
+    return similarity_simple
+    '''
     return render(
         request,
         'interviews/interviews_realtime.html',
     )      
+    '''
 
 def RealtimeInterviews(request):
     return render(
@@ -1859,7 +1861,7 @@ def InterviewAnalysis(cuser, nums_speaker, file_upload_name, stt_lang):
     paid_time = pauthor.paid_time
     if use_time > pauthor.max_time:
         if pauthor.paid_time <= 0:
-            return -2, '','','','','','',''
+            return -2, '','','','','','','',''
         else :
             paid_time = pauthor.paid_time - (use_time-pauthor.max_time)
             use_time = pauthor.max_time
