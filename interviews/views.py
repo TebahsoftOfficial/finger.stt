@@ -79,6 +79,7 @@ import pandas as pd
 from django.core.files.storage import FileSystemStorage
 import distance
 from rank_bm25 import BM25Okapi, BM25Plus
+from scipy.spatial.distance import correlation
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -113,6 +114,11 @@ def cos_similarity(v1, v2):
     
     return similarity
 
+def jaccard_similarity(list1, list2):
+    s1 = set(list1)
+    s2 = set(list2)
+    return float(len(s1.intersection(s2)) / len(s1.union(s2)))
+
 
 def similarity(request, method, sid, label):
     doc_list = []
@@ -123,25 +129,26 @@ def similarity(request, method, sid, label):
     sent_data = binary_to_dict(sent_data)
     
     if intv.stt_engine=='naver':
-        sdata = sent_data['text'].replace('\r',' ')
+        #sdata = sent_data['text'].replace('\r',' ')
+        sdata = sent_data['text']
         doc_list.append(sdata)
     elif intv.stt_engine=='vito':
         tstr = ''
         for st in sent_data:
             tstr = tstr + st['msg'] + ' '
-        tstr = tstr.replace('\r',' ')
+        #tstr = tstr.replace('\r',' ')
         doc_list.append(tstr)
 
     label = label.replace('\r',' ')
     doc_list.append(label)
 
-    if method == 'tfidf' or method == 'count' or method == 'hashing':
+    if method == 'tfidf' or method == 'count' or method == 'jaccard':
         if method == 'tfidf':
             tfidf_vect = TfidfVectorizer()
         elif method == 'count':
             tfidf_vect = CountVectorizer()  # 유사도 측정 방법 카운트 벡터 활용
-        elif method == 'hashing':
-            tfidf_vect = HashingVectorizer()
+        elif method == 'jaccard':
+            tfidf_vect = TfidfVectorizer() #HashingVectorizer()
         feature_vect = tfidf_vect.fit_transform(doc_list)
         # Sparse Matrix형태를 Dense Matrix로 변환
         feature_vect_dense = feature_vect.todense() # toarray()도 가능
@@ -149,27 +156,22 @@ def similarity(request, method, sid, label):
         # 첫 번째, 두 번째 문서 피처 벡터 추출
         vect1 = np.array(feature_vect_dense[0]).reshape(-1,)
         vect2 = np.array(feature_vect_dense[1]).reshape(-1,)
-        print(f"\nSTT 처리문서 feacture vector:\n {vect1}\n")
-        print(f"Label 문서(정답지) feacture vector:\n {vect2}")    
-        # 코사인 유사도 
-        similarity_simple = cos_similarity(vect1, vect2 )           
+        #print(f"\nSTT 처리문서 feacture vector:\n {vect1}\n")
+        #print(f"Label 문서(정답지) feacture vector:\n {vect2}")    
+        
+        if method == 'jaccard':
+            similarity_simple = jaccard_similarity(doc_list[0], doc_list[1])
+        else:   # 코사인 유사도 
+            similarity_simple = cos_similarity(vect1, vect2 )           
     elif method == 'bm25':
-        ''' for test
-        corpus = [
-            "Hello there good man!",
-            "It is quite windy in London",
-            "How is the weather today?"
-        ]
-        ltokenize = [doc.split(" ") for doc in corpus]
-        query = "windy London"
+        
+        ltokenize = [doc_list[0].split(" ")]
+        qtokenize = doc_list[1].split(" ")
         qtokenize = query.split(" ")
-        '''
+        ltokenize.append(qtokenize)
 
-        ltokenize = [doc_list[1].split(" ")]
-        qtokenize = doc_list[0].split(" ")
-
-        #print(f"ltokenNize\n {ltokenize}")        
-        #print(f"QtokenNize\n {qtokenize}")
+        print(f"ltokenNize\n {ltokenize}")        
+        print(f"QtokenNize\n {qtokenize}")
         bm25_vect = BM25Okapi(ltokenize)
         bm25_result = bm25_vect.get_scores(qtokenize)
         print(f"Bm25=> {bm25_result}")
@@ -177,11 +179,25 @@ def similarity(request, method, sid, label):
 
 
     elif method == 'bm25plus':
-        ltokenize = doc_list[1].split(" ")
-        qtokenize = doc_list[0].split(" ")
-        bm25_vect = BM25Plus()
-        similarity_simple = bm25_vect.get_scores(qtokenize)        
+        '''
+        corpus = [
+            "세계 배달 피자 리더 도미노피자가 우리 고구마를 활용한 신메뉴를 출시한다.도미노피자는 오는 2월 1일 국내산 고구마와 4가지 치즈가 어우러진 신메뉴 `우리 고구마 피자`를 출시하고 전 매장에서 판매를 시작한다. 이번에 도미노피자가 내놓은 신메뉴 `우리 고구마 피자`는 까다롭게 엄선한 국내산 고구마를 무스와 큐브 형태로 듬뿍 올리고, 모차렐라, 카망베르, 체더 치즈와 리코타 치즈 소스 등 4가지 치즈와 와규 크럼블을 더한 프리미엄 고구마 피자다.",
+            "피자의 발상지이자 원조라고 할 수 있는 남부의 나폴리식 피자(Pizza Napolitana)는 재료 본연의 맛에 집중하여 뛰어난 식감을 자랑한다. 대표적인 나폴리 피자로는 피자 마리나라(Pizza Marinara)와 피자 마르게리타(Pizza Margherita)가 있다.",
+            "도미노피자가 삼일절을 맞아 '방문포장 1+1' 이벤트를 진행한다. 이번 이벤트는 도미노피자 102개 매장에서 3월 1일 단 하루 동안 방문포장 온라인, 오프라인 주문 시 피자 1판을 더 증정하는 이벤트다. 온라인 주문 시 장바구니에 2판을 담은 후 할인 적용이 가능하며, 동일 가격 또는 낮은 가격의 피자를 고객이 선택하면 무료로 증정한다."
+        ]   
+        query = "도미노피자 신메뉴"
 
+        ltokenize = [doc.split(" ") for doc in corpus]     
+        qtokenize = query.split(" ")
+        '''
+
+        ltokenize = [doc_list[1].split(" ")]
+        qtokenize = doc_list[0].split(" ")
+
+        bm25_vect = BM25Plus(ltokenize)
+        bm25_result = bm25_vect.get_scores(qtokenize)        
+        print(f"Bm25Plus=> {bm25_result}")
+        similarity_simple = bm25_result[0]
  
     '''
     if method == 'tfidf':

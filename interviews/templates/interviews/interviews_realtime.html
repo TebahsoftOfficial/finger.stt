@@ -191,10 +191,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
       let cur_time = new Date();
       let elaps = cur_time - start_time;
-      elaps = Math.floor(elaps/1000);
-      let seconds = elaps % 60;
-      let minutes = Math.floor(elaps/60) % 60
-      let hours = Math.floor(elaps/3600);
+      sec_elaps = Math.floor(elaps/1000);
+      let seconds = sec_elaps % 60;
+      let minutes = Math.floor(sec_elaps/60) % 60
+      let hours = Math.floor(sec_elaps/3600);
       //let hours = elaps.getHours(); 
       //let minutes = ('0'+elaps.getMinutes()).slice(-2);  // 분
       //let seconds = ('0'+elaps.getSeconds()).slice(-2);  // 초
