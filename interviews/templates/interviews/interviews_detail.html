@@ -1,7 +1,7 @@
 {% extends 'interviews/interviews_base.html' %}
 {% load mathfilters %}
 {% block css_content %}
-<style>
+<!-- <style>
 textarea.autosize
 {
     border:1px solid #999999;
@@ -10,181 +10,264 @@ textarea.autosize
     padding:1%;
 }
 
-</style>
+</style> -->
 
 {% endblock %}
 
 {% block main_area %}
-
-<div class="row mb-1" >
-        {% if mode == "view" %}
-       <h5> <center >
-          대화제목 : {{ interviews.title }}
-        </center></h5><br>
-        {% elif mode == "edit" %}
-        <form method="post" enctype="multipart/form-data">
-            <label for="id_title" class="form-label" style="padding-top:6; float:left;">대화 제목</label>  
-            <div class="row mb-2">
-              <div class="col-9">
-                <input type="text" value="{{ interviews.client_name }}" id="id_client_name" name="client_name" style="display:none;">                  
-                
-                <input type="text" class="form-control" name="title" id="id_title" value="{{ interviews.title }}">
-              </div>
-              
-            </div>  
-        </form>
-        {% endif %}
-
-</div>
-
-<div class="row" style="margin-bottom: 0px;">
-    <div class="col-12 col-lg-5">
-            {% if interviews.confidence != 0 and interviews.confidence != null %}
-            <center>
-
-            <span class="btn-secondary border-0 mb-0 px-1 py-1" role="alert" style="font-size:small; text-align: left;"
-            data-bs-container="#tooltip-container2" data-bs-toggle="tooltip" data-bs-placement="right" title="-&nbsp;&nbsp;신뢰도를 향상시키는 TIP&nbsp;&nbsp;- *마이크 가까이, 주변소음제거 *여러명 동시발언 자제">
-                신뢰도 {{ interviews.confidence|div:10 }}</span>
-             <button type="button" class="btn-secondary border-0 mb-0 px-1 py-1" style="font-size:small; text-align: left;" id="similar">정확도 00.00</button>                
-             <i class="fas fa-lightbulb fa-sm" style="color:#0d6ef4;">&nbsp;좋음</i>
-                <i class="fas fa-lightbulb fa-sm" style="color:#20c997;">&nbsp;보통</i>
-                    <i class="fas fa-lightbulb fa-sm" style="color:#ff5733;">&nbsp;나쁨</i>
-            </center>
+<div class="container row mx-auto p-0">
+    <div class="left col-12 col-lg-9 border-end order-2 order-lg-1">
+        <div style="display:none;" id="idTable">
+            <form method="post" enctype="multipart/form-data" id="sentform" >
+                {% csrf_token %}
+            </form>
+            <div class="chat-message-right pb-4" id="senttr"> </div>
+        </div>
+        <div id="voice_load" class="alert alert-warning col-12 text-center py-5 my-3" role="alert">
+            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            <strong>음성파일 로딩중 ....</strong>
+        </div>
+        <div class="chat-message-right pb-4" id="sentli">
+        
+        </div>
+    </div>
+    <div class="right col-12 col-lg-3 order-1 order-lg-2">
+        <div class="row my-2" >
+            {% if mode == "view" %}
+                <span class="w-25 text-black">
+                    대화명:
+                </span>
+                <h3 class="w-75 d-inline-block mb-0 text-truncate">{{ interviews.title }}</h3>
+                <span class="mt-2 w-25 text-black">
+                    고객명:
+                </span>
+                <h4 class="mt-2 w-75 d-inline-block">
+                    {{client_info.name}}
+                </h4>
+                {% block subnav_area %}
+                    {% include 'interviews/subnavbar.html' %}
+                {% endblock %}
+            {% elif mode == "edit" %}
+                <form method="post" enctype="multipart/form-data">
+                    <label for="id_title" class="form-label">대화 제목</label>  
+                    <div class="row mb-1">
+                        <div class="col-12">
+                            <input type="text" value="{{ interviews.client_name }}" id="id_client_name" name="client_name" style="display:none;">                  
+                            <input type="text" class="form-control" name="title" id="id_title" value="{{ interviews.title }}">
+                        </div>
+                        
+                    </div>  
+                </form>
             {% endif %}
-    </div>
-    <div class="dropdown col-12 col-lg-7">
-
-        <button type="button" class="btn btn-info rounded-pill dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="margin-top: 3px; font-size:small; padding:3">
-        <i class="mdi mdi-wrench"></i>상담이동
-        </button>
-        <div class="dropdown-menu" >
-            <form class="px-4 py-3" id="id_nameForm" method="post" enctype="multipart/form-data" name="nameForm" >
-            {% csrf_token %}
-                <div class="mb-3" >
-                    <input type="text" value="{{ interviews.title }}" id="id_title" name="title" style="display:none;">
-                    <label for="id_client_name2" class="form-label">이동대상선택</label>
-                    <select class="form-select" id="id_client_name2" name="client_name2" value="{{ client_name }}">
-                        {% for client in clients_list %}
-                            {% if client.name != "고객미정" and user.username == client.counselor.username %}
-                            <option>{{ client.name }}</option>
-                            {% endif %}
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="row"><button id="button1" class="btn btn-info rounded-pill" style="margin-top: 34px; font-size:small; padding:3" type="submit" >
-                <i class="mdi mdi-wrench"></i>이동</button></div>'
-            </form>
+        
         </div>
-
-        &nbsp<button type="button" class="btn btn-info rounded-pill dropdown-toggle" onClick="role_view2();" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="margin-top: 3px; font-size:small; padding:3">
-        <i class="mdi mdi-wrench"></i>화자변경
-        </button>
-
-        <div class="dropdown-menu">
-            <form class="px-4 py-3" method="post" enctype="multipart/form-data" id="id_diazForm" >
-            {% csrf_token %}
-
-                <div id="role_group">
-                </div>
-                <input type="text" value="{{ interviews.title }}" id="id_title" name="title" style="display:none;">
-                <input type="text" value="{{ interviews.client_name }}" id="id_client_name" name="client_name" style="display:none;">
-                <div class="row">
-                    <button id="button2" class="btn btn-info rounded-pill" style="margin-top:10px; padding:5;" type="submit" >
-                    <i class="mdi mdi-wrench"></i>변경</button>
-                </div>
-            </form>
-        </div>
-
-        &nbsp<button type="button" class="btn btn-info rounded-pill dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="margin-top: 3px; font-size:small; padding:3">
-        <i class="mdi mdi-wrench"></i>화자추가
-        </button>
-
-        <div class="dropdown-menu px-4 py-3">
-
-                <div class="row mb-2">
-                    <div class="col-3"><label class="form-label" style="margin-top:3;">화자</label></div>
-                    <div class="col-9"><input type="text" id="new_speaker" class="form-control" style="margin-top: 1px; padding:2;"></div>
-                </div>
-                <div class="row">
-                    <button id="add_spk" class="btn btn-info rounded-pill" onClick="add_speaker();" style="margin-top:10px; padding:5;">
-                    <i class="mdi mdi-wrench"></i>추가</button>
-                </div>
-
-
-        </div>
-
-        <button type="button" class="btn btn-info rounded-pill dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="margin-top: 3px; font-size:small; padding:3">
-        <i class="mdi mdi-wrench"></i>정확도측정
-        </button>
-        <div class="dropdown-menu px-4 py-3" >
-            <div class="mb-3" >
-                <label for="id_client_name2" class="form-label">측정방법선택</label>
-                <select class="form-select" id="id_evalMethod" name="client_name2">
-                    <option value="tfidf" selected>TfIdf</option>
-                    <option value="count">Count</option>
-                    <option value="jaccard">Jaccard</option>
-                    <!--option value="bm25">BM25</option>
-                    <option value="bm25plus">BM25Plus</option-->                                        
-                </select>
-
-                <label for="id_label_file" class="form-label mt-2">레이블 파일</label>
-                <input type="file" class="form-control" name="label_file"  id="id_label_file" placeholder="레이블 파일" >                
-            </div>
-            <div class="row"><button id="button1" class="btn btn-info rounded-pill" style="margin-top: 34px; font-size:small; padding:3" onclick="evalSend();">
-            <i class="mdi mdi-wrench"></i>정확도 측정</button></div>
-            <form class="px-4 py-3" id="id_evalForm" method="post" style="display:none;"
-            enctype="multipart/form-data" name="evalForm">
-            {% csrf_token %}
-            </form>
-        </div>
-
-    </div>
-</div>
-
-<div style="display:none;">
-    <form class="px-4 py-3" method="post" enctype="multipart/form-data" id="add_speaker">
-        {% csrf_token %}
-    </form>
-</div>
-
-<hr>
-
-<div class="row">
-    <div class="col-5">
-        <button id='sentmode' onclick="changeMode();"  type="button" class="btn btn-success btn-sml" style="margin-top: 3px; font-size:small; padding:3; display:none;">
-        <i class="fa fa-exchange-alt"></i>뷰모드</button>
-        <button id="sentsave" onclick="contentSave();" type="button" class="btn btn-success btn-sm" style="margin-top: 3px; font-size:small; padding:3; display:none;">
-        <i class="dripicons-document" ></i>내용저장</button>
-    </div>
-    <div class="col-7">
+        
         <div class="row">
-            <lable class="col-4 col-form-label text-right" style="font-size:small;"><b>침묵설정</b></lable>
-
-            <div class="col-3">
-            <input class="form-control px-1" type="number" value="{{ interviews.quiet_basis }}" min="0" id="quiet_basis" >
+            <div class="col-12">
+                {% if interviews.confidence != 0 and interviews.confidence != null %}
+                <div class="row">
+                    <div class="col-12">
+                        <div 
+                            class="docTag tooltipBox"
+                            role="alert"
+                        >
+                            신뢰도 {{ interviews.confidence|div:10 }}
+                            <span class="tooltipText">
+                                <p><b>-신뢰도를 향상시키는 TIP-</b></p>
+                                <p>마이크는 가까이!</p>
+                                <p>주변 소음은 NO!</p>
+                                <p>발언은 한명씩!</p>
+                            </span>
+                        </div>
+                        <p class="docTag" id="similar">
+                            정확도 00.00
+                        </p>                
+                    </div>
+                    <div class="col-12 text-center">
+                        <!-- <i class="fad fa-dot-circle fa-sm symb great-symb"></i> -->
+                        <!-- <i class="fas fa-dot-circle fa-lg symb good-symb"></i>보통 -->
+                        <!-- <i class="fas fa-times fa-lg symb bad-symb"></i>나쁨 -->
+                        <span class="mdi mdi-star-circle fa-lg symb great-symb"></span>좋음
+                        <span class="mdi mdi-check-circle fa-lg symb good-symb"></span>보통
+                        <span class="mdi mdi-close-circle fa-lg symb bad-symb"></span>나쁨
+                    </div>
+                </div>
+                {% endif %}
             </div>
-            <div class="col-3 ml-0 px-1">
-                <button class="btn btn-success btn-sml" onclick="quiet_sent();" style="margin-top: 3px; font-size:small; padding:3;">적용</button>
+            <div class="dropdown row mt-2 mx-auto">
+        
+                <button 
+                    type="button"
+                    class="col-6 mb-1 btn btn-outline-custom rounded-pill dropdown-toggle"
+                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-user symb"></i>고객 배정
+                </button>
+                <div class="dropdown-menu p-0" >
+                    <div class="dropdown-menu-inner px-4 pt-3 w-100 h-100">
+                        <form id="id_nameForm" class="m-0" method="post" enctype="multipart/form-data" name="nameForm" >
+                        {% csrf_token %}
+                            <div class="mb-2" >
+                                <input type="text" value="{{ interviews.title }}" id="id_title" name="title" style="display:none;">
+                                <label for="id_client_name2" class="form-label">이동대상선택</label>
+                                <select class="form-select" id="id_client_name2" name="client_name2" value="{{ client_name }}">
+                                    {% for client in clients_list %}
+                                        {% if client.name != "고객미정" and user.username == client.counselor.username %}
+                                        <option>{{ client.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="d-flex justify-content-center"><button id="button1" class="btn btn-outline-custom rounded-pill" type="submit" >
+                            <i class="mdi mdi-wrench"></i>이동</button></div>'
+                        </form>
+                    </div>
+                </div>
+                
+                <button
+                    type="button"
+                    class="col-6 mb-1 btn btn-outline-custom rounded-pill dropdown-toggle"
+                    onClick="role_view2();"
+                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-exchange-alt symb"></i>화자 변경
+                </button>
+        
+                <div class="dropdown-menu p-0">
+                    <div class="dropdown-menu-inner px-4 pt-3 w-100 h-100">
+                        <form method="post" enctype="multipart/form-data" id="id_diazForm" >
+                        {% csrf_token %}
+            
+                            <div id="role_group">
+                            </div>
+                            <input type="text" value="{{ interviews.title }}" id="id_title" name="title" style="display:none;">
+                            <input type="text" value="{{ interviews.client_name }}" id="id_client_name" name="client_name" style="display:none;">
+                            <div class="d-flex justify-content-center">
+                                <button id="button2" class="btn btn-outline-custom rounded-pill" type="submit" >
+                                <i class="mdi mdi-wrench"></i>변경</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    class="col-6 mb-1 btn btn-outline-custom rounded-pill dropdown-toggle"
+                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-user-plus symb"></i>화자 추가
+                </button>
+        
+                <div class="dropdown-menu p-0">
+                    <div class="dropdown-menu-inner px-4 py-3 w-100 h-100">
+                        <div class="row mb-2">
+                            <div class="col-3"><label class="form-label" style="margin-top:3;">화자</label></div>
+                            <div class="col-9"><input type="text" id="new_speaker" class="form-control"></div>
+                        </div>
+                        <div class="d-flex justify-content-center">
+                            <button id="add_spk" class="btn btn-outline-custom rounded-pill" onClick="add_speaker();">
+                            <i class="mdi mdi-wrench"></i>추가</button>
+                        </div>
+                    </div>
+                </div>
+        
+                <button
+                    type="button"
+                    class="col-6 mb-1 btn btn-outline-custom rounded-pill dropdown-toggle"
+                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-calculator symb"></i>정확도 측정
+                </button>
+                <div class="dropdown-menu p-0" >
+                    <div class="dropdown-menu-inner px-4 py-3 w-100 h-100">
+
+                        <div class="mb-3" >
+                            <label for="id_client_name2" class="form-label">측정방법선택</label>
+                            <select class="form-select" id="id_evalMethod" name="client_name2">
+                                <option value="tfidf" selected>TfIdf</option>
+                                <option value="count">Count</option>
+                                <option value="jaccard">Jaccard</option>
+                                <!--option value="bm25">BM25</option>
+                                <option value="bm25plus">BM25Plus</option-->                                        
+                            </select>
+            
+                            <label for="id_label_file" class="form-label mt-2">레이블 파일</label>
+                            <input type="file" class="form-control" name="label_file"  id="id_label_file" placeholder="레이블 파일" >                
+                        </div>
+                        <div class="d-flex justify-content-center">
+    
+                            <button id="button1" class="btn btn-outline-custom rounded-pill" onclick="evalSend();">
+                                <i class="mdi mdi-wrench"></i>
+                                정확도 측정
+                            </button>
+                        </div>
+                        <form class="px-4 py-3" id="id_evalForm" method="post" style="display:none;"
+                        enctype="multipart/form-data" name="evalForm">
+                        {% csrf_token %}
+                        </form>
+                    </div>
+                </div>
+        
             </div>
         </div>
-    </div>    
-
-</div>
-
-<div id="voice_load" class="alert alert-light col-4" role="alert" style="margin-top:3px;padding:3px; font-size:small;">
-    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-    <strong>음성파일 로딩중 ....</strong>
-</div>
-
-<div style="display:none;" id="idTable">
-    <form method="post" enctype="multipart/form-data" id="sentform" >
-        {% csrf_token %}
-    </form>
-    <div class="chat-message-right pb-4" id="senttr"> </div>
-</div>
-
-<div class="chat-message-right pb-4" id="sentli">
-
+        
+        <div style="display:none;">
+            <form class="px-4 py-3" method="post" enctype="multipart/form-data" id="add_speaker">
+                {% csrf_token %}
+            </form>
+        </div>
+        
+        <div class="row mt-2">
+            <div class="col-12">
+                <div class="row mx-auto align-items-center">
+                    <div class="col-8 px-0">
+                        <label for="quiet_basis"><b>침묵설정</b></label>
+                        <input class="form-control" type="number" value="{{ interviews.quiet_basis }}" min="0" id="quiet_basis" >
+                    </div>
+                    <button class="btn btn-outline-custom rounded-pill mx-auto col-3" onclick="quiet_sent();">적용</button>
+                </div>
+            </div>    
+            <div class="row mt-2 mx-auto">
+                <button 
+                    id='sentmode'
+                    onclick="changeMode();" 
+                    type="button"
+                    class="col-6 btn btn-outline-custom rounded-pill"
+                >
+                    <i class="fa fa-exchange-alt symb"></i>뷰모드</button>
+                <button
+                    id="sentsave"
+                    onclick="contentSave();"
+                    type="button"
+                    class="col-6 btn btn-outline-custom rounded-pill">
+                    <i class="fas fa-save symb"></i>
+                    저장</button>
+            </div>
+        </div>
+        <hr>
+        <div class="row manualSection">
+            {% if mode == "view" %}
+                <div class="alert alert-custom">
+                    <i class="fas fa-asterisk symb"></i>
+                    더블 클릭으로 재생/멈춤
+                </div>
+            {% elif mode == "edit" %}
+                <div class="alert alert-custom">
+                    <p class="mb-0">
+                        <i class="fas fa-asterisk symb"></i>
+                        double click: 재생/멈춤
+                    </p>
+                    <p class="mb-0">
+                        <i class="fas fa-asterisk symb"></i>
+                        shift + enter: 말뭉치 분리
+                    </p>
+                    <p class="mb-0">
+                        <i class="fas fa-asterisk symb"></i>
+                        shift + del: 말뭉치 삭제
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+        
+        
+    </div>
+    
+    
 </div>
 
 
@@ -273,7 +356,7 @@ window.onload = function() {
     aud.on('loaderror', function(){
         console.log('Audio Load Error!!');
         $('#voice_load').attr("class","alert alert-danger col-4")
-        $('#voice_load').html("<strong>&nbsp;&nbsp;음성이 지원되지 않는 파일입니다.</strong>");
+        $('#voice_load').html("<strong>음성이 지원되지 않는 파일입니다.</strong>");
     });  
    
     sents = '{{ intv_sentence }}'.replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&#x27;/g,"'")
@@ -391,26 +474,24 @@ function good_sent(mode) {
 
   if ( mode == 'view') {
 
-    sentmode.innerHTML = '<i class="fa fa-exchange-alt"></i>&nbsp편집';
-    sentmode.setAttribute('style',"margin-top: 3px; font-size:small; padding:3;");
+    sentmode.innerHTML = '<i class="fas fa-tools symb"></i>편집';
     table1.setAttribute("style", "display:none;");
-    btn_save.setAttribute('style',"margin-top: 3px; font-size:small; padding:3; display:none;");
 
     for(i=0; i<sents.length; i++) {
         if (sents[i].text!='') {
             if( sents[i].name != prev_name) {
-                output+= '<div class="text-muted text-nowrap mt-2"><b>' + sents[i].name + String(sents[i].sent_no).padStart(3,'0')+'&nbsp&nbsp</b>';
-                output+= Math.floor((sents[i].start)/60000) + "'" + Math.floor(((sents[i].start)%60000)/1000) + "''" + '</div>'
+                output+= '<div class="text-nowrap custom-sent-header"><b class="me-2"><i class="fas fa-user fa-sm symb"></i>' + sents[i].name + String(sents[i].sent_no).padStart(3,'0')+'</b>';
+                output+= '<i class="fas fa-clock fa-sm symb"></i>'+ Math.floor((sents[i].start)/60000) + "'" + Math.floor(((sents[i].start)%60000)/1000) + "''" + '</div>'
              }
 
-            output+='<div class="row"><div class="col-12 py-1 px-3 bg-light rounded" ondblclick="playat(' + i + ');">'
+            output+='<div class="row"><div class="col-11 mx-auto custom-sent" ondblclick="playat(' + i + ');">'
 
             if ( 'confidence' in sents[i] && sents[i].confidence!=0) {
-                if(sents[i].confidence > 0.85) output+='<i class="fas fa-lightbulb fa-sm" style="color:#0d6ef4;"></i>&nbsp&nbsp'
-                else if (sents[i].confidence > 0.6) output+='<i class="fas fa-lightbulb fa-sm" style="color:#20c997;"></i>&nbsp&nbsp'
-                else output+='<i class="fas fa-lightbulb fa-sm" style="color:#ff5733;"></i>&nbsp&nbsp'
+                if(sents[i].confidence > 0.85) output+='<span class="mdi mdi-star-circle fa-lg symb great-symb"></span>'
+                else if (sents[i].confidence > 0.6) output+='<span class="mdi mdi-check-circle fa-lg symb good-symb"></span>'
+                else output+='<span class="mdi mdi-close-circle fa-lg symb bad-symb"></span>'
             }
-            if ( ( sents[i].quiet_time >= $('#quiet_basis').val() ) && $('#quiet_basis').val() >0 )  output+= '<b>(침묵'+ sents[i].quiet_time + '초)&nbsp</b>'
+            if ( ( sents[i].quiet_time >= $('#quiet_basis').val() ) && $('#quiet_basis').val() >0 )  output+= '<b>(침묵'+ sents[i].quiet_time + '초)</b>'
             output+= sents[i].sentence + '</div>'
 
             output+= '</div>'
@@ -419,36 +500,34 @@ function good_sent(mode) {
     }
   }
   else if ( mode == 'edit') {
-    sentmode.innerHTML = '<i class="fa fa-exchange-alt"></i>&nbsp돌아가기';
-    sentmode.setAttribute('style',"margin-top: 3px; font-size:small; padding:3;");
+    sentmode.innerHTML = '<i class="fas fa-arrow-left symb"></i>뒤로가기';
     table1.setAttribute("style", "display;");
     sent_tr = document.getElementById('senttr');
     speakers = JSON.parse('{{ interviews.speakers }}'.replace(/&quot;/g,'"').replace(/&amp;quot;/g,'"').replace(/&#39;/g,'"').replace(/&#x27;/g,'"'));
-    btn_save.setAttribute('style',"margin-top: 3px; font-size:small; padding:3;");
     for(var i=0; i<sents.length; i++) {
         if (sents[i].text!='') {
             if( sents[i].name != prev_name) {
-                //output+= '<div class="text-muted text-nowrap mt-2"><b>' + sents[i].name + String(sents[i].sent_no).padStart(3,'0')+'&nbsp&nbsp</b>'
-                output+= '<div class="text-muted text-nowrap mt-2"><b>' + sents[i].name +'&nbsp&nbsp</b>'
-                output+= Math.floor((sents[i].start)/60000) + '\'' + Math.floor(((sents[i].start)%60000)/1000) + '\'\'' + '</div>'
+                //output+= '<div class="text-muted text-nowrap mt-2"><b>' + sents[i].name + String(sents[i].sent_no).padStart(3,'0')+'</b>'
+                output+= '<div class="text-nowrap custom-sent-header"><b class="me-2"><i class="fas fa-user fa-sm symb"></i>' + sents[i].name +'</b>'
+                output+= '<i class="fas fa-clock fa-sm symb"></i>'+ Math.floor((sents[i].start)/60000) + '\'' + Math.floor(((sents[i].start)%60000)/1000) + '\'\'' + '</div>'
              }
 
             if ( ( sents[i].quiet_time >= $('#quiet_basis').val() ) && $('#quiet_basis').val() >0 )  output+= '<h4><span class="badge bg-info">침묵'+ sents[i].quiet_time + '초</span></h4>'
-            output+= '<div class="row">'
+            output+= '<div class="d-flex justify-content-center align-items-center my-2">'
             if ( 'confidence' in sents[i]  && sents[i].confidence!=0 ) {
-                output+='<div class="col-1 pt-2">'
-                if(sents[i].confidence > 0.85) output+='<i class="fas fa-lightbulb fa-sm" style="color:#0d6ef4;"></i>&nbsp&nbsp'
-                else if (sents[i].confidence > 0.6) output+='<i class="fas fa-lightbulb fa-sm" style="color:#20c997;"></i>&nbsp&nbsp'
-                else output+='<i class="fas fa-lightbulb fa-sm" style="color:#ff5733;"></i>&nbsp&nbsp'
+                output+='<div class="">'
+                if(sents[i].confidence > 0.85) output+='<span class="mdi mdi-star-circle fa-lg symb great-symb"></span>'
+                else if (sents[i].confidence > 0.6) output+='<span class="mdi mdi-check-circle fa-lg symb good-symb"></span>'
+                else output+='<span class="mdi mdi-close-circle fa-lg symb bad-symb"></span>'
                 output+='</div>'
             }
-            output+='<div class="col-8">'
+            output+='<div class="w-75">'
 
-            output+= '<textarea class="isentence autosize" gened="false" cols="100" ondblclick="iplayat('+i+');" '
-            output+= 'onclick="resize(this);" onkeyup="sent_split(this, ' + i + ', \'' + sents[i].name +'\')">'   //"sent_split(this, ' + i + ')">'
+            output+= '<textarea class="isentence sent-edit-row p-2" onclick="resize(this)" gened="false" rows="1" ondblclick="iplayat('+i+');" '
+            output+= 'onkeyup="sent_split(this, ' + i + ', \'' + sents[i].name +'\')">'   //"sent_split(this, ' + i + ')">'
             output+= sents[i].sentence+'</textarea>'
             output+= '</div>'
-            output+= '<div class="col-3 py-1 px-3 rounded"><select class="form-select opts" aria-label="Default select example">'
+            output+= '<div class="py-1 ps-1 rounded"><select class="form-select opts" style="width: 80px;" aria-label="Default select example">'
             //output+= '<div class="col-3 py-1 px-3 rounded"><select id="opt' + i + '" class="form-select" aria-label="Default select example">'
             for(var j=0; j<speakers.length; j++) {
                 if(sents[i].name == speakers[j].name)
@@ -505,13 +584,14 @@ function iplayat(i) {
 
 function resize(obj) {
   obj.style.height = "1px";
-  obj.style.height = (12+obj.scrollHeight)+"px";
+  obj.style.height = (2+obj.scrollHeight)+"px";
   str = obj.innerHTML;
+
 }
 
 function sent_split(obj, i, sname) {
   obj.style.height = "1px";
-  obj.style.height = (12+obj.scrollHeight)+"px";
+  obj.style.height = (2+obj.scrollHeight)+"px";
   // left ctl : 17,  enter :13
   var output = '';
 
@@ -528,8 +608,9 @@ function sent_split(obj, i, sname) {
     $(obj).attr('gened', "true");
     //console.log("key: ctrl enter "+ nidx);
     output+= '<div class="row"><div class="col-1 pt-2"></div><div class="col-8">'
-    output+= '<textarea class="isentence autosize" cols="100" gened="' + gen_attr + '" ondblclick="iplayat('+i+');" onchange="this.focus();" onclick="resize(this);" onkeyup="sent_split(this, ' + i + ')">'
+    output+= '<textarea class="isentence sent-edit-row p-2" cols="100" gened="' + gen_attr + '" onclick="resize(this)" ondblclick="iplayat('+i+');" onchange="this.focus();" onkeyup="sent_split(this, ' + i + ')">'
     output+= str.substring(0,nidx)+'</textarea>'   // enter code 13 is inserted
+    
     output+= '</div>'
     output+= '<div class="col-3 py-1 px-3 rounded"><select class="form-select opts" aria-label="Default select example">'
 
