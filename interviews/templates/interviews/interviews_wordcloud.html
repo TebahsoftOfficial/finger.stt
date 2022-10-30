@@ -7,26 +7,32 @@
 {% endblock %}
 
 {% block main_area %}
-<h3> {{ interviews.title }} </h3>
-<br>
-<h4> 단어 빈도수 </h4>
-<hr>
-    <table class="table table-hover">
-      <tbody>
-      <tr id="slabel">
-      </tr>
-      </tbody>
-      <tbody id="dic_freq">
+<div class="container py-5">
+  <button class="float-left btn-outline-custom rounded-pill" onclick = "location.href = '/interviews/detail/edit/{{ interviews.pk }}/' ">
+    <i class="fas fa-arrow-left symb"></i>
+    뒤로가기
+  </button>
+  <div class="text-center pb-3">
+    대화명: 
+    <h3 class="d-inline-block doubleUnderline">{{ interviews.title }} </h3>
+  </div>
+  <h4> 단어 빈도수 </h4>
+  <table class="table table-anal table-hover border-top">
+    <tbody>
+    <tr id="slabel">
+    </tr>
+    </tbody>
+    <tbody id="dic_freq">
 
-      </tbody>
-
-
-    <table class="table table-bordered table-centered mb-0">
-      <tbody id="wc_svg">
-
-      </tbody>
+    </tbody>
     </table>
-    <script type="text/javascript">
+  <table class="table table-bordered table-centered mb-0">
+    <tbody id="wc_svg">
+
+    </tbody>
+  </table>
+</div>
+<script type="text/javascript">
 
     view_wordcloud();
     function view_wordcloud() {
@@ -46,8 +52,8 @@
       for(var idx in sents) {
 
         if(chk%2==1) {
-          hl_td = '<td colspan=2 align="center" style="background-color: #ffffee">'
-          hl_td2 = '<td align="center" style="background-color: #fff8ee">'
+          hl_td = '<td colspan=2 align="center" style="background-color: #7c74700e;">'
+          hl_td2 = '<td align="center" style="background-color: #fff8ee;">'
         }
         else {
           hl_td = '<td colspan=2 align="center">'

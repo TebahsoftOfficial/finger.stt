@@ -1,31 +1,41 @@
 {% extends 'interviews/interviews_base.html' %}
 
 {% block main_area %}
-<h3> {{ interviews.title }} </h3>
+<div class="container py-5">
+  <button class="float-left btn-outline-custom rounded-pill" onclick = "location.href = '/interviews/detail/edit/{{ interviews.pk }}/' ">
+    <i class="fas fa-arrow-left symb"></i>
+    뒤로가기
+  </button>
+  <div class="text-center pb-3">
+    대화명: 
+    <h3 class="d-inline-block doubleUnderline">{{ interviews.title }} </h3>
+  </div>
+  <table class="table table-hover table-anal">
+    <tbody>
+    <tr id="slabel">
+    </tr>
+    <tr id="word_cnt">
+    </tr>
+    <tr id="type_count">
+    </tr>
+    <tr id="speak_len">
+    </tr>
+    <tr id="speak_rate">
+    </tr>
+    <tr id="speed">
+    </tr>
+    <!--tr id="senti">
+    </tr>
+    <tr id="pos_count">
+    </tr>
+    <tr id="neg_count">
+    </tr-->
+  
+    </tbody>
+  </table>
+  
+</div>
 
-    <table class="table table-hover">
-      <tbody>
-      <tr id="slabel">
-      </tr>
-      <tr id="word_cnt">
-      </tr>
-      <tr id="type_count">
-      </tr>
-      <tr id="speak_len">
-      </tr>
-      <tr id="speak_rate">
-      </tr>
-      <tr id="speed">
-      </tr>
-      <!--tr id="senti">
-      </tr>
-      <tr id="pos_count">
-      </tr>
-      <tr id="neg_count">
-      </tr-->
-
-      </tbody>
-    </table>
 
   <script type="text/javascript">
   window.onload = function() {
