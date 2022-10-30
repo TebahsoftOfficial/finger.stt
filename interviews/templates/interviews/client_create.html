@@ -3,6 +3,8 @@
 {% load static %}
 
 {% block nav_area %}
+  {% include 'interviews/navbar.html' %}
+
 {% endblock %}
 
 {% block link_area %}
@@ -21,60 +23,83 @@
 
 
 {% block main_area %}
-<div class="row mb-2">
-  <div class="col-4">
-    <a href="javascript:history.back();"><button class="btn btn-info rounded-pill" ><i class="mdi mdi-skip-previous me-1"></i>이전화면</button></a>
-  </div>
-</div>
-
-<div class="col-6 alert alert-success" role="alert" id="res-alert" style="display:none;">
-    <i class="dripicons-checkmark me-2"></i>  <strong> 동일한 고객이 존재합니다 !!! 기존 고객명에 등록하고나 다른이름으로 등록하기바랍니다.</strong>
-</div>
-
-<form method="post" enctype="multipart/form-data" onsubmit="return checkClient();">
-{% csrf_token %}
-    <!--div>
-    {{ form | crispy }}
-    </div-->
-  <div class="row mb-2">
-    <div class="col-4" >
-        <label for="id_name" class="form-label"><i class="mdi mdi-face"></i>&nbsp고객명</label>
-        <input class="form-control" type="text" name="name" id="id_name" >
-    </div>
-    <div class="col-4">
-        <label for="id_mail" class="form-label"><i class="mdi mdi-email"></i>&nbsp이메일주소</label>
-        <input class="form-control" type="text" name="mail" id="id_mail"  >
-    </div>
-    <div class="col-4">
-        <label for="id_phone" class="form-label"><i class="mdi mdi-card-account-phone"></i>&nbsp연락처</label>
-        <input type="text" name="phone" id="id_phone" class="form-control" data-toggle="input-mask" data-mask-format="000-0000-0000" >
-    </div>
-  </div>
-  <div class="row mb-2">
-    <div class="col-4" >
-        <label for="id_password" class="form-label"><i class="mdi mdi-form-textbox-password"></i>&nbsp폴더암호</label>
-        <input type="password" class="form-control" id="id_password" name="password">
-    </div>
-  </div>
-  <div class="row mb-2">
-    <div class="col-12">
-    <label for="id_comment" class="form-label">고객노트</label>
-    <!--input class="form-control" type="text" id="id_comment" required="" value="{{ client.comment }}"-->
-        <div id="snow-editor" style="height: 300px;" >
-
-       </div>
-        <textarea style="display:none;" name="comment" cols="40" rows="5" maxlength="1000" class="textarea form-control" id="id_comment" >
-
-        </textarea>
-
-    </div>
-  </div>
-  <div class="row mb-2">
-      <div class="col-4">
-        <button type="submit" class="btn btn-info rounded-pill" onClick="htrans();"><i class="mdi mdi-creation me-1"></i> <span>신규생성</span> </button>
+<div class="container py-2 py-lg-5">
+  <div class="row">
+    <div class="col-12 col-lg-8 mx-auto">
+      <div class="pageSubject">
+        <p class="h3 text-center">고객 등록</p>
       </div>
+  
+      <div class="alert alert-success" role="alert" id="res-alert" style="display:none;">동일한 고객이 존재합니다. 다른 이름으로 등록해 주세요.
+          <i class="dripicons-checkmark me-2"></i>  <strong> </strong>
+      </div>
+      
+      <form method="post" enctype="multipart/form-data" onsubmit="return checkClient();">
+      {% csrf_token %}
+          <!--div>
+          {{ form | crispy }}
+          </div-->
+        <div class="row mb-2">
+          <div class="col-12 col-md-5 mx-auto" >
+              <label for="id_name" class="form-label">
+                <!-- <i class="mdi mdi-face symb"></i> -->
+                고객명
+              </label>
+              <input class="form-control" type="text" name="name" id="id_name" >
+          </div>
+          <div class="col-12 col-md-5 mx-auto">
+              <label for="id_mail" class="form-label">
+                <!-- <i class="mdi mdi-email symb"></i> -->
+                이메일주소
+              </label>
+              <input class="form-control" type="text" name="mail" id="id_mail"  >
+          </div>
+          <div class="col-12 col-md-5 mx-auto">
+              <label for="id_phone" class="form-label mt-1">
+                <!-- <i class="mdi mdi-card-account-phone symb"></i> -->
+                연락처
+              </label>
+              <input type="text" name="phone" id="id_phone" class="form-control" data-toggle="input-mask" data-mask-format="000-0000-0000" >
+          </div>
+          <div class="col-12 col-md-5 mx-auto">
+              <label for="id_password" class="form-label mt-1">
+                <!-- <i class="mdi mdi-form-textbox-password symb"></i> -->
+                폴더암호
+              </label>
+              <input type="password" class="form-control" id="id_password" name="password">
+          </div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-12 col-md-11 mx-auto">
+          <label for="id_comment" class="form-label">고객노트</label>
+          <!--input class="form-control" type="text" id="id_comment" required="" value="{{ client.comment }}"-->
+              <div id="snow-editor" style="height: 300px;" >
+      
+            </div>
+              <textarea 
+                style="display:none;" 
+                name="comment" 
+                cols="40" rows="5" maxlength="1000" 
+                class="textarea form-control" 
+                id="id_comment" 
+                placeholder="고객노트를 입력해주세요" 
+              >
+              </textarea>
+      
+          </div>
+        </div>
+        <div class="d-flex justify-content-between mt-4 px-4">
+            <button class="btn btn-outline-custom" onclick="history.back();">
+              이전화면
+            </button>
+            <button type="submit" class="btn btn-outline-custom" onClick="htrans();">
+              신규생성
+            </button>
+        </div>
+      </form>
+    </div>
   </div>
-</form>
+</div>
 
 {% endblock %}
 
@@ -93,8 +118,8 @@ function checkClient() {
         console.log("{{ client.name }}");
         if( "{{ client.name }}" == iname ) {
             //document.getElementById("res-alert").setAttribute("style","display");
-            alert("동일한 고객이 존재합니다 !!! 다른이름으로 등록하기바랍니다.");
-            history.back();
+            alert("동일한 고객이 존재합니다. 다른 이름으로 등록해 주세요.");
+            // history.back();
             ret = 0;
             return false;
         }
