@@ -52,7 +52,7 @@ function startRecording() {
     //recordButton.attr("role","status")
     recordButton.attr("src","/media/symbol/recording.png")
 
-    $('#recdrop').attr("class","collapse show");
+    $('#recdrop').attr("class","collapse show"); //sujee
     /*
     	We're using the standard promise based getUserMedia()
     	https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
@@ -127,7 +127,7 @@ function startRecording() {
 			createDownloadLink(blob,recorder.encoding);
 			robj = blob;
 	        submitButton.attr("disabled",false);
-            submitButton.html('<strong>저장</strong>');
+            submitButton.html(`<i class="fas fa-cloud-upload-alt"></i>`);
 			//encodingTypeSelect.disabled = false;
 
 
@@ -194,7 +194,7 @@ function stopRecording() {
 	recordButton.attr("disabled", false);
 	pauseButton.attr("disabled", true);
     pauseButton.attr("pause","false")
-    pauseButton.html('Pause');
+    pauseButton.html(`<i class="fas fa-pause"></i>`);
 	//__log('Recording stopped');
 }
 
@@ -204,14 +204,14 @@ function pauseRecording() {
         recorder.pauseRecording();
         recordButton.attr("src","/media/symbol/pause.png")
         pauseButton.attr("pause","true");
-        pauseButton.html('Resume');
+        pauseButton.html(`<i class="fas fa-play"></i>`);
 		clearInterval(interval);
     }
     else {
         recorder.resumeRecording();
         recordButton.attr("src","/media/symbol/recording.png")
         pauseButton.attr("pause","false")
-        pauseButton.html('Pause');
+        pauseButton.html(`<i class="fas fa-pause"></i>`);
         interval = setInterval( time_recording(), 1000);
     }
 }
@@ -241,8 +241,7 @@ function visualize(audioCtx, source) {
     requestAnimationFrame(draw);
 
     analyser.getByteTimeDomainData(dataArray);
-
-    canvasCtx.fillStyle = 'rgb(200, 200, 200)';
+    canvasCtx.fillStyle = 'rgb(214, 204, 200)'; //sujee
     canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
 
     canvasCtx.lineWidth = 2;
@@ -292,7 +291,7 @@ function submitRecording(event) {
   const recordedFile = new File([robj], 'audiorecord_'+getCurrentDate()+'.ogg');
 
     $('#intv_form').attr("style","display");
-    $('#recdrop').attr("class","collapse");
+    $('#recdrop').attr("class","collapse"); //sujee
     let container = new DataTransfer();
     container.items.add(recordedFile);
 

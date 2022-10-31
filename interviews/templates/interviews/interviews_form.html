@@ -8,120 +8,139 @@
 <!-- init js -->
 <script src="{% static 'interviews/bootstrap/assets/js/ui/component.fileupload.js' %}"></script>
 
-<style>
-    #agreement {
-        border: 2 px;
-    }
-</style>
 {% endblock %}
-
 
 {% block subnav_area %}
 {% endblock %}
 
 {% block main_area %}
+    <div class="container py-2 py-lg-5">
+        <div class="row">
+            <div class="col-12 col-lg-8 mx-auto">
+                <div class="pageSubject">
 
-    <p class="h3"> 대화 생성 </p>
+                    <p class="h3 text-center"> 대화 생성 </p>
+                </div>
+            
+                {% if file_chk == 'fail' %}
+                    <div class="col-12 alert alert-danger" role="alert">
+                        <i class="dripicons-checkmark me-2"></i>  <strong>지원하지않는 파일포맷입니다.</strong>
+                    </div>
+                {% elif file_chk == 'timeover' %}
+                    <div class="col-12 alert alert-danger" role="alert">
+                        <i class="dripicons-checkmark me-2"></i>  <strong>사용시간이 초과되었습니다. 운영자에게 문의하시기 바립니다.</strong>
+                    </div>
+                {% endif %}
+            
+                <form method="post" enctype="multipart/form-data" id="anal_form" onsubmit="return submitchk();" >
+                    {% csrf_token %}
+                    <!--div>
+                    {{ form | crispy }}
+                   </div-->
+            
+                    <div class="row mb-2">
+                      <div class="col-8">
+                        <label for="id_title" class="form-label">대화 제목</label>
+                        <input type="text" class="form-control" name="title" id="id_title" placeholder="상담 제목을 입력하세요">
+                      </div>
+                      <div class="col-4">
+                        <label for="id_stt_engine" class="form-label">STT엔진</label>
+                        <select class="form-select mb-3" name="stt_engine" id="id_stt_engine">
+                            <option selected value="naver">네이버클로바</option>
+                            <option value="vito">비토</option>
+                        </select>
+                    </div>       
+                    </div>
+            
+            
+                    <div class="row mb-2">
+                      <div class="col">
+                        <label for="id_file_upload" class="form-label">대화 파일</label>
+                        <input type="file" accept="audio/*, video/*" class="form-control" name="file_upload" required id="id_file_upload" placeholder="상담파일 입력" onchange="formchk();">
+                      </div>
+                    </div>
+            
+            
+            
+                    <div class="alert alert-warning" role="alert" style="display:none" id="timealert">
+                        <i class="dripicons-warning me-2"></i>  <strong>시간부족</strong> <mytag id="alertmsg"></mytag>
+                    </div>
+            
+                    <div class="alert alert-info" role="alert" style="display:none" id="timeinfo">
+                        <i class="dripicons-information me-2"></i>  <mytag id="infomsg"></mytag>
+                    </div>
+            
+            
+                    <div class="row mb-1 align-items-center">
+                        <div class="col-4">
+                            <label for="id_nums_speaker" class="form-label">화자수</label>
+                            <input type="number" class="form-control" name="nums_speaker" id="id_nums_speaker" value="2">
+                        </div>
+                        <div class="col-4">
+                            <label for="id_stt_lang" class="form-label">언어선택</label>
+                            <select class="form-select" name="stt_lang" id="id_stt_lang">
+                                <option selected value="ko-KR">한국어</option>
+                                <option value="en-US">영어</option>
+                                <!--option value="enko">한+영</option>
+                                <option value="ja">일본어</option-->
+                            </select>
+                        </div>
+                        <div id="div_id_client_name" class="col-4">
+                            <div class="d-flex flex-wrap">
 
-    {% if file_chk == 'fail' %}
-        <div class="col-10 alert alert-success" role="alert">
-            <i class="dripicons-checkmark me-2"></i>  <strong>지원하지않는 파일포맷입니다.</strong>
-        </div>
-    {% elif file_chk == 'timeover' %}
-        <div class="col-10 alert alert-success" role="alert">
-            <i class="dripicons-checkmark me-2"></i>  <strong>사용시간이 초과되었습니다. 운영자에게 문의하시기 바립니다.</strong>
-        </div>
-    {% endif %}
+                                <label for="id_client_name" class="form-label">고객선택</label>
+                                <button class="btn btn-custom py-0 px-1 ms-auto mb-1">
+                                    <a href="/interviews/add/client/cltlist/">
+                                        <!-- <a href="/interviews/add/client/ivcreate/"> -->
+                                        <i class="fas fa-user-plus"></i>
+                                        <span class="d-none d-lg-inline-block">
+                                            고객추가
+                                        </span>
+                                    </a>
+                                </button>
+                                <!--input type="text" class="form-control" name="client_name" id="id_client_name" placeholder="고객이름"-->
+                                <select class="form-select" name="client_name" id="id_client_name">
+                                    <!--option selected>고객선택</option-->
+                                    <option selected value="고객미정">고객미정</option>
+                                    {% for client in clients_list %}
+                                        {% if client.name != "고객미정" and user.username == client.counselor.username %}
+                                            <option value="{{ client.name }}">{{ client.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                
+                                </select>
+                            </div>
+            
+                        </div>
+            
+                    </div>
+            
+                    <div id="agreement" class="col-12 alert alert-custom border-0 my-3 p-2" role="alert">
+                        <center><h4 class="border-bottom">녹음파일 활용 동의 및 서약서</h4></center>
+                        1. Finger.ai는 AI에 의해서 자동으로 녹취된 내용을 한글로 바꾸어 드리는 서비스로서, Finger.ai를 운영하고 있는 테바소프트(주)는 고객이 업로드한 파일에
+                        대하여 고객 동의 없이는 어떤한 경우에도 열람하거나, 청취하지 않음을 서약합니다.<br><br>
+                        2. 고객님이 Finger.ai에 업로드하시는 녹음파일은 불법적으로 녹취된 파일이 아니어야 하며, 녹음파일에 대한 불법성 여부에 대한 책임은 사용자 개인이 책임져야 합니다.
+                    </div>
+                    <div class="col-12 d-flex justify-content-between">
+                        
+                        <button class="btn btn-outline-custom" onclick="history.back();">
+                            이전화면
+                        </button>
 
-    <form method="post" enctype="multipart/form-data" id="anal_form" onsubmit="return submitchk();" >
-        {% csrf_token %}
-        <!--div>
-        {{ form | crispy }}
-       </div-->
-
-        <div class="row mb-2">
-          <div class="col-8">
-            <label for="id_title" class="form-label">대화 제목</label>
-            <input type="text" class="form-control" name="title" id="id_title" placeholder="상담 제목을 입력하세요">
-          </div>
-          <div class="col-4">
-            <label for="id_stt_engine" class="form-label">STT엔진</label>
-            <select class="form-select mb-3" name="stt_engine" id="id_stt_engine">
-                <option selected value="naver">네이버클로바</option>
-                <option value="vito">비토</option>
-            </select>
-        </div>       
-        </div>
-
-
-        <div class="row mb-2">
-          <div class="col">
-            <label for="id_file_upload" class="form-label">대화 파일</label>
-            <input type="file" class="form-control" name="file_upload" required id="id_file_upload" placeholder="상담파일 입력" onchange="formchk();">
-          </div>
-        </div>
-
-
-
-        <div class="alert alert-warning" role="alert" style="display:none" id="timealert">
-            <i class="dripicons-warning me-2"></i>  <strong>시간부족</strong> <mytag id="alertmsg"></mytag>
-        </div>
-
-        <div class="alert alert-info" role="alert" style="display:none" id="timeinfo">
-            <i class="dripicons-information me-2"></i>  <mytag id="infomsg"></mytag>
-        </div>
-
-
-        <div class="row mb-1">
-            <div class="col-3">
-                <label for="id_nums_speaker" class="form-label">화자수</label>
-                <input type="number" class="form-control" name="nums_speaker" id="id_nums_speaker" value="2">
+                        <button id="button1" class="btn btn-outline-custom" type="submit" disabled>
+                            동의 후 등록
+                        </button>
+                    </div>
+            
+                    {% block link_area %}
+                    <br>
+                    {% endblock %}
+                </form>
+                <audio id="audiochk" style="display:none" onloadedmetadata="audio_duration();"></audio>
+                <video id="videochk" style="display:none" onloadedmetadata="video_duration();"></video>
             </div>
-            <div class="col-4">
-                <label for="id_stt_lang" class="form-label">언어선택</label>
-                <select class="form-select mb-3" name="stt_lang" id="id_stt_lang">
-                    <option selected value="ko-KR">한국어</option>
-                    <option value="en-US">영어</option>
-                    <!--option value="enko">한+영</option>
-                    <option value="ja">일본어</option-->
-                </select>
-            </div>
-            <div id="div_id_client_name" class="col-5">
-                <label for="id_client_name" class="form-label">고객선택</label>
-                &nbsp&nbsp&nbsp&nbsp<a href="/interviews/add/client/ivcreate/" style="margin-top: 8;padding-top: 8px;"><i class="uil-folder-medical" ></i>&nbsp고객추가</a>
-                <!--input type="text" class="form-control" name="client_name" id="id_client_name" placeholder="고객이름"-->
-                <select class="form-select mb-3" name="client_name" id="id_client_name">
-                    <!--option selected>고객선택</option-->
-                    <option selected value="고객미정">고객미정</option>
-                    {% for client in clients_list %}
-                        {% if client.name != "고객미정" and user.username == client.counselor.username %}
-                            <option value="{{ client.name }}">{{ client.name }}</option>
-                        {% endif %}
-                    {% endfor %}
-
-                </select>
-
-            </div>
-
         </div>
-
-        <div id="agreement" class="col-12 alert-info bg-info text-white border-0 mb-2 py-2 px-2" role="alert">
-            <center><strong>녹음파일 활용 동의 및 서약서</strong></center><br>
-            1. Finger.ai는 AI에 의해서 자동으로 녹취된 내용을 한글로 바꾸어 드리는 서비스로서, Finger.ai를 운영하고 있는 테바소프트(주)는 고객이 업로드한 파일에
-            대하여 고객 동의 없이는 어떤한 경우에도 열람하거나, 청취하지 않음을 서약합니다.<br><br>
-            2. 고객님이 Finger.ai에 업로드하시는 녹음파일은 불법적으로 녹취된 파일이 아니어야 하며, 녹음파일에 대한 불법성 여부에 대한 책임은 사용자 개인이 책임져야 합니다.
-        </div>
-
-        <button id="button1" class="btn btn-primary" type="submit" disabled>
-            동의 후 등록
-        </button>
-
-        {% block link_area %}
-        <br>
-        {% endblock %}
-    </form>
-    <audio id="audiochk" style="display:none" onloadedmetadata="audio_duration();"></audio>
-    <video id="videochk" style="display:none" onloadedmetadata="video_duration();"></video>
+    </div>
     <script>
     var popupid;
 
@@ -224,7 +243,7 @@
                 imsg = document.getElementById("timeinfo")
                 amsg.setAttribute("style","display")
                 imsg.setAttribute("style","display:none")
-                info.innerHTML = "잔여시간보다 "+ (ad-rem) + "분 부족합니다.<br>(채팅상담으로 구매요청 바랍니다.)"
+                info.innerHTML = "잔여시간보다 "+ (ad-rem) + "분 부족합니다.(채팅상담으로 구매요청 바랍니다.)"
                 //alert("사용시간 초과! \n잔여시간보다 "+ (ad-rem) + "분 부족합니다..\n(채팅상담으로 구매요청)");
             }
             else {

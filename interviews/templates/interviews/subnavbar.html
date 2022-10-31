@@ -1,11 +1,37 @@
 {% load socialaccount %}
-<nav class="navbar navbar-expand navbar-light bg-light">
+<!-- <h3>{{client_info.name}}</h3> -->
+<div class="row mx-auto">
+  <a href="{{ interviews.get_absolute_url }}" class="col-4 p-0">
+    <button class="btn btn-outline-custom w-100">상담전체</button>
+  </a>
+  {% if interviews.stt_lang == 'ko-KR' %}
+    <a href="{{ interviews.get_sentimental_url }}" class="col-4 p-0">
+      <button class="btn btn-outline-custom w-100">감정분석</button>
+    </a>
+    <a href="{{ interviews.get_wordcloud_url }}" class="col-4 p-0">
+      <button class="btn btn-outline-custom w-100">단어분석</button>
+    </a>
+  {% else %}
+    <a href="#" class="col-4 p-0">
+      <button class="btn btn-outline-custom w-100">
+        <i class="dripicons-heart"></i>감정분석(준비중)</a>
+      </button>
+    </a>
+    <a href="#" class="col-4 p-0">
+      <button class="btn btn-outline-custom w-100">
+        <i class="dripicons-graph-pie"></i>단어분석(준비중)</a>
+      </button>
+    </a>
+  {% endif %}
+</div>
+
+<!-- <nav class="navbar navbar-expand navbar-light">
   <div class="container-fluid">
 
     <div class="collapse navbar-collapse col-1" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto mb-0 mb-lg-0">
-        <a class="navbar-brand" href="/interviews/client/{{interviews.client.pk}}" style="font-size:medium; padding-top:0;">&nbsp
-          <strong><i class="dripicons-user" style="padding-top:0;"></i>&nbsp{{client_info.name}}</strong></a>
+        <a class="navbar-brand" href="/interviews/client/{{interviews.client.pk}}" style="font-size:medium; padding-top:0;">
+          <strong><i class="dripicons-user" style="padding-top:0;"></i>{{client_info.name}}</strong></a>
       </ul>
       <ul class="navbar-nav me-auto mb-0 mb-lg-0">
         <li class="nav-item dropdown">
@@ -14,17 +40,17 @@
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
             <li><a class="dropdown-item" href="{{ interviews.get_absolute_url }}" style="font-size:medium; padding:3">
-                  &nbsp&nbsp<i class="dripicons-clipboard"></i><strong>상담전체</strong></a></li>
+                  <i class="dripicons-clipboard"></i><strong>상담전체</strong></a></li>
             {% if interviews.stt_lang == 'ko-KR' %}
             <li><a class="dropdown-item" href="{{ interviews.get_sentimental_url }}" style="font-size:medium; padding:3">
-                  &nbsp&nbsp<i class="dripicons-heart"></i><strong>감정분석</strong></a></li>
+                  <i class="dripicons-heart"></i><strong>감정분석</strong></a></li>
             <li><a class="dropdown-item" href="{{ interviews.get_wordcloud_url }}" style="font-size:medium; padding:3">
-                  &nbsp&nbsp<i class="dripicons-graph-pie"></i><strong>단어분석</strong></a></li>
+                  <i class="dripicons-graph-pie"></i><strong>단어분석</strong></a></li>
             {% else %}
             <li><a class="dropdown-item" href="#" style="font-size:medium; padding:3">
-                  &nbsp&nbsp<i class="dripicons-heart"></i>감정분석(준비중)</a></li>
+                  <i class="dripicons-heart"></i>감정분석(준비중)</a></li>
             <li><a class="dropdown-item" href="#" style="font-size:medium; padding:3">
-                  &nbsp&nbsp<i class="dripicons-graph-pie"></i>단어분석(준비중)</a></li>
+                  <i class="dripicons-graph-pie"></i>단어분석(준비중)</a></li>
             {% endif %}
           </ul>
         </li>
@@ -33,6 +59,42 @@
     <div class="col-11"></div>
 
   </div>
-</nav>
+</nav> -->
+
+<!-- <nav class="navbar navbar-expand navbar-light bg-light">
+  <div class="container-fluid">
+
+    <div class="collapse navbar-collapse col-1" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-0 mb-lg-0">
+        <a class="navbar-brand" href="/interviews/client/{{interviews.client.pk}}" style="font-size:medium; padding-top:0;">
+          <strong><i class="dripicons-user" style="padding-top:0;"></i>{{client_info.name}}</strong></a>
+      </ul>
+      <ul class="navbar-nav me-auto mb-0 mb-lg-0">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size:medium; padding-top:1;">
+            <strong> 메뉴선택</strong>
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <li><a class="dropdown-item" href="{{ interviews.get_absolute_url }}" style="font-size:medium; padding:3">
+                  <i class="dripicons-clipboard"></i><strong>상담전체</strong></a></li>
+            {% if interviews.stt_lang == 'ko-KR' %}
+            <li><a class="dropdown-item" href="{{ interviews.get_sentimental_url }}" style="font-size:medium; padding:3">
+                  <i class="dripicons-heart"></i><strong>감정분석</strong></a></li>
+            <li><a class="dropdown-item" href="{{ interviews.get_wordcloud_url }}" style="font-size:medium; padding:3">
+                  <i class="dripicons-graph-pie"></i><strong>단어분석</strong></a></li>
+            {% else %}
+            <li><a class="dropdown-item" href="#" style="font-size:medium; padding:3">
+                  <i class="dripicons-heart"></i>감정분석(준비중)</a></li>
+            <li><a class="dropdown-item" href="#" style="font-size:medium; padding:3">
+                  <i class="dripicons-graph-pie"></i>단어분석(준비중)</a></li>
+            {% endif %}
+          </ul>
+        </li>
+      </ul>
+    </div>
+    <div class="col-11"></div>
+
+  </div>
+</nav> -->
 
 

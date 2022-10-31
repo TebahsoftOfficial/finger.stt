@@ -14,6 +14,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="{% static 'interviews/bootstrap/assets/css/icons.min.css' %}" rel="stylesheet" type="text/css" />
   <link rel="stylesheet" href="{% static 'interviews/bootstrap/assets/css/app.min.css' %}" media="screen" id="light-style" />
+  <link rel="stylesheet" href="{% static 'interviews/style.css' %}" />
 <!--link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous"-->
   <script src="https://kit.fontawesome.com/90b0dd0984.js" crossorigin="anonymous"></script>
     {% block css_content %}
@@ -25,113 +26,111 @@
 </head>
 
 <body>
-
-{% if user.is_authenticated %}
-{% block nav_area %}
-{% include 'interviews/navbar.html' %}
-{% endblock %}
-{% block subnav_area %}
-{% include 'interviews/subnavbar.html' %}
-{% endblock %}
-
-<div class="container my-3">
-    <div class="row">
-
-        <div class="col-md-12 col-lg-12" id="main-area">
-
-
-            {% block main_area %}
-            {% endblock %}
-            {% block link_area %}
-            <a href="/interviews/create/norm/" class="btn btn-light btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>
-                <i class="dripicons-document-edit"></i><span><strong>&nbsp상담작성</strong></span></a>
-            <a href="{{ interviews.get_absolute_url }}" class="btn btn-light btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>
-                <i class="dripicons-clipboard"></i><span><strong>&nbsp상담전체</strong></span></a>
-            <!--a href="{{ interviews.get_summary_url }}" class="btn btn-light btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>
-                <i class="dripicons-checklist"></i><span><strong>&nbsp상담요약</strong></span></a-->
-            <a href="{{ interviews.get_sentimental_url }}" class="btn btn-light btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>
-                <i class="dripicons-heart"></i><span><strong>&nbsp대화분석</strong></span></a>
-            <a href="{{ interviews.get_wordcloud_url }}" class="btn btn-light btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>
-                <i class="dripicons-graph-pie"></i><span><strong>&nbsp단어분석</strong></span></a>
-            {% endblock %}
-        </div>
-        {% block widget_area %}
-
-
+<div class="main-wrapper d-flex flex-column align-items-center">
+    {% if user.is_authenticated %}
+        {% block nav_area %}
+            {% include 'interviews/navbar.html' %}
         {% endblock %}
-    </div>
-</div>
+        <div class="w-100">
+            <div class="row">
+
+                <div class="col-md-12" id="main-area">
 
 
+                    {% block main_area %}
+                    {% endblock %}
+                    {% block link_area %}
+                    <!-- <a href="/interviews/create/norm/" class="btn btn-light btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>
+                        <i class="dripicons-document-edit"></i><span><strong>상담작성</strong></span></a>
+                    <a href="{{ interviews.get_absolute_url }}" class="btn btn-light btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>
+                        <i class="dripicons-clipboard"></i><span><strong>상담전체</strong></span></a> -->
+                    <!--a href="{{ interviews.get_summary_url }}" class="btn btn-light btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>
+                        <i class="dripicons-checklist"></i><span><strong>상담요약</strong></span></a-->
+                    <!-- <a href="{{ interviews.get_sentimental_url }}" class="btn btn-light btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>
+                        <i class="dripicons-heart"></i><span><strong>대화분석</strong></span></a>
+                    <a href="{{ interviews.get_wordcloud_url }}" class="btn btn-light btn-sm" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:2'>
+                        <i class="dripicons-graph-pie"></i><span><strong>단어분석</strong></span></a> -->
+                    {% endblock %}
+                </div>
+                {% block widget_area %}
 
-{% else %}
-        <!--div class="d-grid gap-2 col-4 mx-auto mt-3" -->
-    <div class="row mt-3">
-        <center>
-        <img src="/media/symbol/tebah_symbol02.png" width="200" height="220">
 
-        </center>
-    </div>
-    <br>
+                {% endblock %}
+            </div>
+        </div>
+    {% else %}
+
+        <div class="d-flex m-auto flex-column justify-content-center align-items-center">
+            <div class="row pb-3 mb-5">
+                <center>
+                    <img class="logoAnimate" src="/media/symbol/tebah_symbol02.png" width="200" height="220">
+                </center>
+            </div>
+            <div class="d-flex">
+                <a role="button" class="btn btn-outline-dark btn-lg d-flex align-items-center me-3" href="/accounts/login/">
+                    <i class="fas fa-sign-in-alt me-1"></i>
+                    로그인
+                </a>
+                <a role="button" class="btn btn-outline-dark btn-lg d-flex align-items-center" href="/accounts/signup/">
+                    <i class="fas fa-user-plus me-1"></i>
+                    회원가입
+                </a>
+            </div>
+        </div>
+        
     <div class="row" style="display:none;">
         <div class="col-1"></div>
         <div class="alert alert-danger col-10" role="alert">
             <center><strong>베타서비스 진행중!!!</strong><br>
                 시스템은 별도의 고지없이 서버점검이 진행될 수 있습니다.
             문제가 발생하면 아래 카카오 채널로 메시지를 보내주세요.<br>
-           <a href="http://pf.kakao.com/_XxiQTb" target="_blank">http://pf.kakao.com/_XxiQTb</a></center>
+        <a href="http://pf.kakao.com/_XxiQTb" target="_blank">http://pf.kakao.com/_XxiQTb</a></center>
         </div>
         <div class="col-1"></div>
     </div>
 
-    <!--div class="d-grid gap-2 col-3 mx-auto " -->
-    <div>
-    <br>
-        <!--center>
+    <!-- <div>
+        <center>
             <a href="{% provider_login_url 'kakao' %}" id="kakao_login">
                 <img src="/media/symbol/kakao_login_medium_narrow.png" >
-                 </a>
-        </center-->
-        <br>
-        <center>
-            <a role="button" class="btn btn-outline-dark btn-block btn-sm" href="/accounts/login/"><i class="far fa-envelope"></i>&nbsp&nbsp Log in with E-mail</a>
-            <a role="button" class="btn btn-outline-dark btn-block btn-sm" href="/accounts/signup/"><i class="far fa-envelope"></i>&nbsp&nbsp Sign Up with E-mail</a>                  
+            </a>
         </center>
+    </div> -->
 
-
+    {% endif %}
+</div>
+<footer class="border-top sticky-bottom">
+    <div class="row g-0 d-flex justify-content-center">
+      <div class="col-10 my-3">
+        <div class="row">
+          <p class="col-12 col-md-6 col-lg-4 col-xl-3 fs-6 fw-lighter m-0">사업자등록번호: 440-87-02207</p>
+          <p class="col-12 col-md-6 col-lg-4 col-xl-3 fs-6 fw-lighter m-0">상호명: 테바소프트(주)</p>
+          <p class="col-12 col-md-6 col-lg-4 col-xl-3 fs-6 fw-lighter m-0">대표자명: 오정섭</p>
+          <p class="col-12 col-md-6 col-lg-4 col-xl-3 fs-6 fw-lighter m-0">통신판매신고: 제2022-대전유성-0475호</p>
+          <p class="col-12 col-md-6 col-lg-4 col-xl-3 fs-6 fw-lighter m-0">고객센터: 070-7565-8698</p>
+          <p class="col-12 col-md-6 col-lg-4 col-xl-3 fs-6 fw-lighter m-0">이메일: tebahsoft@gmail.com</p>
+          <p class="col-12 col-md-6 col-lg-4 col-xl-3 fs-6 fw-lighter m-0">사업장주소: 대전 유성구 대덕대로512번길 20</p>
+          <p class="col-12 col-md-6 col-lg-4 col-xl-3 fs-6 fw-lighter m-0">개인정보책임: 오정섭(070-7565-8698)</p>
+          <span class="col-12 fs-6 fw-lighter m-0 pe-0">COPYRIGHT © TEBAH SOFT. 2021.ALL RIGHTS RESERVED.</span>
+        </div>
+        <span class="d-flex justify-content-center">
+          <a class="me-2" href = "/media/private_guard.pdf" target="_blank">[개인정보보호규정]</a>
+          <a href = "/media/usage_rule.pdf" target="_blank">[이용약관]</a>
+        </span>
+      </div>
     </div>
-<br>
-<br>
-<br>
-{% endif %}
-
+</footer>
 
 {% block javascript %}
-
-<script src="{% static 'interviews/bootstrap/assets/js/bootstrap.bundle.min.js' %}"></script>
-<script src="{% static 'interviews/bootstrap/assets/js/vendor.min.js' %}"></script>
-<script src="{% static 'interviews/bootstrap/assets/js/app.min.js' %}"></script>
-<script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
-<script src="{% static 'interviews/bootstrap/assets/js/popper.min.js' %}"></script>
-
+    <script src="{% static 'interviews/bootstrap/assets/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'interviews/bootstrap/assets/js/vendor.min.js' %}"></script>
+    <script src="{% static 'interviews/bootstrap/assets/js/app.min.js' %}"></script>
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="{% static 'interviews/bootstrap/assets/js/popper.min.js' %}"></script>
 {% endblock %}
-{% block extra_javascript %}{% endblock %}
+
+{% block extra_javascript %}
+{% endblock %}
+
 </body>
-<footer>
-<div class="row">
-    <div class="col-1"></div>
-    <div class="col-10">
-    <p style="line-height:150%;">COPYRIGHT © TEBAH SOFT. 2021. ALL RIGHTS RESERVED.<br>
-   사업자등록번호: 440-87-02207, 상호명:테바소프트(주), 대표자명:오정섭, 사업장주소:대전 유성구 대덕대로512번길 20<br>
-        통신판매신고: 제2022-대전유성-0475호<br>
-
-        E-mail: tebahsoft@gmail.com &nbsp;&nbsp;&nbsp;고객센터: 070-7565-8698<br>
-        개인정보책임: 오정섭(070-7565-8698)</p>
-
-        <a href = "/media/private_guard.pdf" target="_blank">[개인정보보호규정]</a>
-        &nbsp;&nbsp;<a href = "/media/usage_rule.pdf" target="_blank">[이용약관]</a>
-    </div>
-    <div class="col-1"></div>
-</div>
-</footer>
 </html>

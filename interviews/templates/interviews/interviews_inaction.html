@@ -4,38 +4,106 @@
 <head>
     <meta charset="UTF-8">
     <title>대화분석중</title>
-  <!-- Bootstrap CSS -->
-
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="{% static 'interviews/bootstrap/assets/css/icons.min.css' %}" rel="stylesheet" type="text/css" />
-  <link rel="stylesheet" href="{% static 'interviews/bootstrap/assets/css/app.min.css' %}" media="screen" id="light-style" />
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{% static 'interviews/bootstrap/assets/css/icons.min.css' %}" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="{% static 'interviews/bootstrap/assets/css/app.min.css' %}" media="screen" id="light-style" />
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous">
-
+    <style type="text/css">
+        @font-face {
+            font-family: 'MapoFlowerIsland';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/MapoFlowerIslandA.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @keyframes spinner {
+            50% {
+                transform: scaleY(0.25);
+            }
+        }
+        * {
+        -webkit-box-sizing:border-box;
+        box-sizing: border-box;
+        }
+        body{
+            font-family: 'MapoFlowerIsland';
+            padding:0;
+            margin:0;
+            background-color: white;
+        }
+        .wrapper{
+            position:relative;
+            height:100vh;
+        }
+        .wrapper .loading{
+            position:absolute;
+            left:50%;
+            top:50%;
+            -webkit-transform:translate(-50%,-50%);
+            -ms-transform:translate(-50%,-50%);
+            transform:translate(-50%,-50%)
+        }
+        .spinner {
+            width: 300px;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+        }
+        .spinner-item {
+            width: calc(300px / 12);
+            height: 80%;
+            animation: spinner 1500ms ease-in-out infinite;
+        }
+        .spinner-item:nth-child(1) {
+            background-color: #bbbb88;
+            animation-delay: calc(1500ms / 10 * -3);
+        }
+        .spinner-item:nth-child(2) {
+            background-color: #ccc68d;
+            animation-delay: calc(1500ms / 10 * -1);
+        }
+        .spinner-item:nth-child(3) {
+            background-color: #eedd99;
+            animation-delay: calc(1500ms / 10 * -2);
+        }
+        .spinner-item:nth-child(4) {
+            background-color: #eec290;
+            animation-delay: calc(1500ms / 10 * -1);
+        }
+        .spinner-item:nth-child(5) {
+            background-color: #eeaa88;
+            animation-delay: calc(1500ms / 10 * -3);
+        }
+        .card-header {
+            font-size: 22px;
+            background-color: #7c7470;
+            color: white;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-
-
-    <div class="row">
-
-         <button class="btn btn-warning" type="button" disabled>
-            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-            <strong>대화 업로드 분석중!!!</strong>
-        </button>
-         <button class="btn btn-danger" type="button" disabled>
-            <strong>작업이 완료될 때 까지 창 닫기 금지!<br>뒤로가기 버튼 클릭 금지!</strong>
-
-        </button>
-
-    </div>
-    <div class="row mt-3">
-
-        <center>
-        <img src="/media/symbol/tebah_safety01.png" width="357" height="319">
-
-        </center>
-        </div>
-    </div>
-    <br>
+    <div class="wrapper">
+        <div class="loading">
+          <div class="spinner mx-auto">
+            <div class="spinner-item"></div>
+            <div class="spinner-item"></div>
+            <div class="spinner-item"></div>
+            <div class="spinner-item"></div>
+            <div class="spinner-item"></div>
+          </div>
+          <div class="card mt-3">
+            <h5 class="card-header">업로드된 대화를 분석 중입니다</h5>
+            <div class="card-body">
+              <h5 class="card-title text-center">
+                <p>창을 닫거나 뒤로가기를 클릭하지 마시고</p>
+                <p>작업이 완료될 때까지 잠시 기다려 주세요</p>
+              </h5>
+              <img src="/media/symbol/tebah_safety01.png" width="357" height="319">
+            </div>
+          </div>
+      </div>
 {% block javascript %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"></script>
