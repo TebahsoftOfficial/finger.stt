@@ -213,23 +213,23 @@
     </div>
 
     {% if pw_result == 'fail' %}
-        <div class="col-12 alert alert-success" role="alert">
+        <div class="col-10 alert alert-danger mx-auto text-center" role="alert">
             <i class="dripicons-checkmark me-2"></i>  <strong>암호입력오류!</strong>
         </div>
         {% elif pw_result == 'expiredcode' %}
-        <div class="col-12 alert alert-success" role="alert">
+        <div class="col-10 alert alert-danger mx-auto text-center" role="alert">
             <i class="dripicons-checkmark me-2"></i>  <strong>대화코드 유효기간 만료!!</strong>
         </div>
         {% elif pw_result == 'misspell' %}
-        <div class="col-12 alert alert-success" role="alert">
+        <div class="col-10 alert alert-danger mx-auto text-center" role="alert">
             <i class="dripicons-checkmark me-2"></i>  <strong>대화코드 입력 오류!!</strong>
         </div>
         {% elif pw_result == 'recfail' %}
-        <div class="col-12 alert alert-success" role="alert">
+        <div class="col-10 alert alert-danger mx-auto text-center" role="alert">
             <i class="dripicons-checkmark me-2"></i>  <strong>녹음파일 내용이 분석에 적합하지 않습니다!</strong>
         </div>
         {% elif pw_result == 'notime' %}
-        <div class="col-12 alert alert-success" role="alert">
+        <div class="col-10 alert alert-danger mx-auto text-center" role="alert">
             <i class="dripicons-checkmark me-2"></i>  <strong>서비스 시간이 부족합니다.</strong>
         </div>
     {% endif %}
