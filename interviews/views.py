@@ -336,7 +336,10 @@ def RealtimeAnalysis(all_sentence, title, current_user, pauthor):
     except ObjectDoesNotExist:
         clt = Client.objects.create(name='고객미정', counselor=current_user)
 
-    intv = Interviews.objects.create(content_div=save_path, duration=intv_duration, client=clt, author=pauthor, client_name='고객미정',gs_cmk=gs_mac, quiet_basis=0, title= title)        
+    speakers = json.dumps(speakers).replace(r"'false'", r'"false"').replace(r"'true'", r'"true"')
+
+    intv = Interviews.objects.create(content_div=save_path, duration=intv_duration, client=clt, author=pauthor, \
+        speakers=speakers, client_name='고객미정',gs_cmk=gs_mac, quiet_basis=0, title= title)        
 
     context['result'] ='pass'
     context['msg'] = f"{intv.pk}"    
