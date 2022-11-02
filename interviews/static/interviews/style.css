@@ -21,6 +21,7 @@ html, body {
 }
 a,
 a.nav-link {
+  text-decoration: none;
   color: #7c7470;
 }
 
@@ -80,6 +81,8 @@ input:focus {
   min-height:100%;
   margin: 0 auto;
 }
+
+
 .navbar-toggler:hover,
 .navbar-toggler:focus {
   color: #7c7470;
@@ -384,6 +387,17 @@ tbody tr td:nth-child(4) a:hover {
   animation-direction:alternate;
   animation-fill-mode: forwards;
 }
+
+.centerDiv {
+  width: 100%;
+  max-width: 350px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 30px;
+}
+
 
 footer {
   height: 112px;

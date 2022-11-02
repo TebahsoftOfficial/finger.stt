@@ -11,32 +11,40 @@
 {% endblock %}
 
 {% block main_area %}
-<div class="row mb-2">
-  <div class="col-4">
-    <a href="/interviews/" class="btn btn-info rounded-pill" tabindex="-1" role="button" aria-disabled="true" style='font-size:small; padding:4'>
-        <i class="dripicons-backspace"></i><span><strong>&nbsp이전화면</strong></span></a>
+<div class="centerDiv card">
+  <div class="">
+    
+    <form method="post" enctype="multipart/form-data" class="mb-0">
+    {% csrf_token %}
+        <!--div>
+        {{ form | crispy }}
+        </div-->
+    
+      <div class="row mb-3 align-items-center">
+        <label for="id_password" class="col-3 form-label mb-0">폴더암호</label>
+        <div class="col-9">
+
+          <input type="password" name="password" class="form-control" id="id_password">
+        </div>
+      </div>
+    
+      <div class="row">
+        <div class="col-6">
+          <a href="/interviews/" class="w-100 btn btn-outline-custom rounded-pill" tabindex="-1" role="button" aria-disabled="true">
+            <i class="fas fa-arrow-left"></i>
+            이전화면
+          </a>
+        </div>
+        <div class="col-6">
+          <button class="w-100 btn btn-outline-custom rounded-pill" type="submit">
+            <i class="fas fa-check"></i>
+            확 인
+          </button>
+        </div>
+      </div>
+    </form>
   </div>
 </div>
-
-<form method="post" enctype="multipart/form-data">
-{% csrf_token %}
-    <!--div>
-    {{ form | crispy }}
-    </div-->
-
-  <div class="row mb-2">
-    <div class="col-4" >
-        <label for="id_password" class="form-label">폴더암호</label>
-        <input type="password" name="password" class="form-control" id="id_password">
-    </div>
-  </div>
-
-  <div class="row mb-2">
-      <div class="col-4">
-        <button class="btn btn-info rounded-pill" type="submit" style='font-size:small; padding:4'><i class="uil-check"></i><span><strong>확 인</strong></span></button>
-      </div>
-  </div>
-</form>
 
 {% endblock %}
 
