@@ -1,0 +1,69 @@
+{% extends "account/base.html" %}
+
+{% load i18n %}
+
+{% block head_title %}{% trans "Signup" %}{% endblock %}
+
+{% block content %}
+<div class="accountTabs">
+  <button>
+    <a href="{% url 'account_login' %}">
+      로그인 
+    </a>
+  </button>
+  <button disabled class="btn activatedTab">
+    회원가입
+  </button>
+</div>
+
+<!-- <p>{% blocktrans %}Already have an account? Then please <a href="{{ login_url }}">sign in</a>.{% endblocktrans %}</p> -->
+
+<form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
+  {% csrf_token %}
+  <!-- {{ form.as_p }} -->
+    <table>
+      <tr>
+        <td>
+          <label for="id_email">이메일</label>
+        </td>
+        <td>
+          <input type="email" name="email" placeholder="abc@def.com" autocomplete="email" required="" id="id_email">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="id_username">이름</label>
+        </td>
+        <td>
+          <input type="text" name="username" placeholder="" autocomplete="username" minlength="1" maxlength="150" required="" id="id_username">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="id_password1">비밀번호</label>
+        </td>
+        <td>
+          <input type="password" name="password1" placeholder="" autocomplete="new-password" required="" id="id_password1">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="id_password2">비밀번호 확인</label>
+        </td>
+        <td>
+          <input type="password" name="password2" placeholder="" required="" id="id_password2">
+        </td>
+      </tr>
+    </table>
+    
+
+
+  {% if redirect_field_value %}
+  <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+  {% endif %}
+  <div class=" flexCenter">
+    <button class="btn w100" type="submit">회원가입</button>
+  </div>
+</form>
+
+{% endblock %}

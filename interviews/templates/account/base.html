@@ -1,0 +1,67 @@
+{% load static %}
+{% load i18n %}
+{% load socialaccount %}
+
+<!DOCTYPE html>
+<html>
+  <head>
+    {% block extra_head %}
+    {% endblock %}
+    <title>인공지능 대화관리, Finger.ai</title>
+    <link rel="shortcut icon" type="image/png" href="/media/symbol/tebah_symbol02.png">
+    <link rel="stylesheet" href="{% static 'interviews/account.css' %}" />
+
+    <style>
+      
+    </style>
+  </head>
+  <body>
+    {% block body %}
+    <div class="wrapper flexCenter">
+      <div class="signContainer flexCenter">
+        <!-- {% if messages %}
+        <div>
+          <strong>Messages:nonono</strong>
+          <ul>
+            {% for message in messages %}
+            <li>{{message}}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %} -->
+        <img class="accountLogo" src="/media/symbol/tebah_symbol02.png" width="200" height="220">
+
+        <div class="accountTabs">
+          {% if user.is_authenticated %}
+          <div class="accountTab">
+            <a href="{% url 'account_email' %}">이메일 변경</a>
+          </div>
+          <div class="accountTab">
+            <a href="{% url 'account_logout' %}">로그아웃</a>
+          </div>
+          {% else %}
+          <!-- <div class="accountTab">
+            <button>
+              <a href="{% url 'account_login' %}">
+                로그인
+              </a>
+            </button>
+          </div>
+          <div class="accountTab">
+            <button>
+              <a href="{% url 'account_signup' %}">
+                회원가입
+              </a>
+            </button>
+          </div> -->
+          {% endif %}
+        </div>
+        {% block content %}
+        {% endblock %}
+      </div>
+    </div>
+    {% endblock %}
+    {% block extra_body %}
+    {% endblock %}
+  </body>
+</html>

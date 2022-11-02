@@ -1,0 +1,124 @@
+@font-face {
+  font-family: 'S-CoreDream-3Light';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/S-CoreDream-3Light.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+*,
+*::before,
+*::after {
+box-sizing: border-box;
+}
+
+html, body {
+  font-family: 'S-CoreDream-3Light';
+  font-size: 15px;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background-color: white;
+  color: #7c7470;
+}
+button, .btn {
+  font-family: 'S-CoreDream-3Light';
+  border: 1px solid #7c7470;
+  border-radius: 5px;
+  background-color: transparent;
+  margin: 10px;
+  
+
+}
+.btn:hover,
+button:hover,
+.activatedTab {
+  background-color: #7c7470;
+  color: white;
+  cursor: pointer;
+}
+button:active {
+
+}
+button a {
+  padding: 10px 20px;
+  display: block;
+}
+.btn {
+  padding: 10px 20px;
+}
+a,
+a:hover,
+a:visited {
+  text-decoration: none;
+  color: inherit;
+}
+input:focus {
+  outline: none;
+}
+.flexCenter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.wrapper {
+  height: 100%;
+  
+}
+.signContainer {
+  flex-direction: column;
+  background-color: #7c74700e;
+  padding: 30px;
+  border-radius: 15px;
+  width: 500px;
+  height: 800px;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;;
+}
+.accountLogo {
+  margin: 0 auto;
+}
+.accountTabs {
+  margin: 20px 0;
+  display: flex;
+}
+.activatedTab {
+  font-weight: 900;
+  font-size: 18px;
+}
+.activatedTab:hover {
+  cursor: default;
+}
+.login table tr td:nth-child(1) {
+  text-align: center;
+}
+table input,
+#id_email {
+  margin: 5px;
+  padding: 10px;
+  border: 1px solid #7c7470;
+  border-radius: 10px;
+}
+.w80 {
+  width: 80%;
+}
+.w100 {
+  width: 100%;
+}
+.m0 {
+  margin-left: 0;
+  margin-right: 0;
+}
+.smallText {
+  font-size: 14px;
+}
+
+@media (max-width: 992px) { 
+  body {
+      font-size: 15px;
+  }
+  .signContainer {
+      width: 90%;
+      height: 90%;
+  }
+}
