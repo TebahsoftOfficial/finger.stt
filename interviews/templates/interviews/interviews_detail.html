@@ -336,7 +336,9 @@ function changeMode() {
     }
 }
 
-window.onload = function() {
+window.addEventListener('load', function() {    
+
+    $('#voice_load').attr("style","display:none;")
     
     if ( "{{ interviews.file_upload }}"!='') {
         msrc = "/media/{{ interviews.file_upload.name }}";
@@ -376,8 +378,8 @@ window.onload = function() {
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
       return new bootstrap.Tooltip(tooltipTriggerEl)
     })
+});
 
-}
 
 function blobToFile(theBlob, fileName){       
     return new File([theBlob], fileName, { lastModified: new Date().getTime(), type: theBlob.type })

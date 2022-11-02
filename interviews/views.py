@@ -227,90 +227,120 @@ def RealtimeSave(request):
     current_user = request.user
     if not current_user.is_authenticated:
         return redirect('/interviews/')
-    gen_idx = -1
-    gen_sentences = []
 
-    org_sent = dict()
+    try:
+        pauthor = Manager.objects.get(mid=current_user)
+    except ObjectDoesNotExist:
+        pauthor = Manager.objects.create(mid=current_user, use_time=0, max_time=300)   # 300 minutes   millisec * 60000
+
 
     if request.method == "POST":
 
         all_sentence = request.POST.get("all_sentence")
+        all_sentence = json.loads(all_sentence)
         quiet_basis = 0#request.POST.get("quiet_basis")
         title = request.POST.get("title")
 
-        all_sentence = json.loads(all_sentence)
+        context = RealtimeAnalysis(all_sentence, title, current_user, pauthor)
 
-        stn_no_speaker = {}
-        prev_speaker = 'superman'
-        context={'result':'','msg':''}
-
-        speakers = [{"label": "0", "name": "A", "edited": "false"}, {"label": "1", "name": "B", "edited": "false"},{"label": "2", "name": "C", "edited": "false"}]
-        group_sent = []
-        sentimental = dict()
-        all_confidence = 0
-        group_idx = 0
-
-        for si in range(len(speakers)):
-            stn_no_speaker[speakers[si]["label"]] = 0
-
-        i = 0
-        for sent in all_sentence:
-
-            if sent['generated'] == 'false':
-                gen_idx = gen_idx + 1
-
-            fspk = sent['speaker']
-
-            gen_sentences.append({})
-            gen_sentences[i]['sentence'] = sent['sentence']
-            gen_sentences[i]['speaker'] = fspk
-            sindex = next((index for (index, d) in enumerate(speakers) if d["label"] == fspk), None)
-
-            print(f"Sindex:{sindex}, fspk:{fspk}, i:{i}, gen_sentence:{gen_sentences[i]}")    
-            gen_sentences[i]['name'] = speakers[sindex]['name']
-
-            speaker = gen_sentences[i]['speaker']
-
-            if prev_speaker != speaker:
-                stn_no_speaker[speaker] = stn_no_speaker[speaker] + 1
-                prev_speaker = speaker
-                gen_sentences[i]['first_sentence'] = "true"
-            else :
-                gen_sentences[i]['first_sentence'] = "false"
-
-            gen_sentences[i]["sent_no"] = stn_no_speaker[speaker]
-            i = i + 1
-
-        try:
-            gs_cyp, gs_mac = enc(cyp_key, aad, nonce, dict_to_binary(gen_sentences))
-
-        except Exception as e:
-            print(f"SentenceUpdate Encryp Error::{e}")
-            context['result'] ='fail'
-            context['msg'] = "SentenceUpdate Encryp Error"
-            #return HttpResponse("SentenceUpdate Encryp Error")
-            return JsonResponse(context)
-
-        try:
-            timestr = datetime.now().strftime('\%Y\%m\%d')
-            save_path = MEDIA_ROOT + f"\interviews\\files{timestr}\Realtime_{title}.faj"
-            with open(save_path, 'wb') as outfile1:
-                outfile1.write(gs_cyp)
-        except Exception as e:
-            print(f"SentenceUpdate Write Error::{e}")
-            context['result'] ='fail'
-            context['msg'] = "SentenceUpdate Write Error"            
-            #return HttpResponse("SentenceUpdate Write Error")
-            return JsonResponse(context)
-
-        intv = Interviews.objects.create(content=save_path, gs_cmk=gs_mac, quiet_basis= quiet_basis, title= title)
-
-        context['result'] ='pass'
-        context['msg'] = f"{intv.pk}"
         #print(f"sentenceUpdate::{all_sentence[0]['speaker']}:{all_sentence[0]['sentence']}")
         #return HttpResponse("{{intv.pk}}")    
         return JsonResponse(context)
 
+def RealtimeAnalysis(all_sentence, title, current_user, pauthor):
+    gen_idx = -1
+    gen_sentences = []
+    context = {'result':'', 'msg':''}
+    print(f"All::{all_sentence}")
+    #all_sentence = json.loads(all_sentence)
+    #print(all_sentence)
+
+    stn_no_speaker = {}
+    prev_speaker = 'superman'
+    context={'result':'','msg':''}
+
+    speakers = [{"label": "0", "name": "A", "edited": "false"}, {"label": "1", "name": "B", "edited": "false"},{"label": "2", "name": "C", "edited": "false"}]
+    group_sent = []
+    sentimental = dict()
+    group_idx = 0
+
+    for si in range(len(speakers)):
+        stn_no_speaker[speakers[si]["label"]] = 0
+
+    i = 0
+    for sent in all_sentence:
+
+        if sent['generated'] == 'false':
+            gen_idx = gen_idx + 1
+
+        fspk = sent['speaker']
+
+        x = time.strptime(sent['start_time'],'%H:%M:%S')
+        start_time = timedelta(hours=x.tm_hour,minutes=x.tm_min,seconds=x.tm_sec).total_seconds() * 1000        
+
+        end_time = start_time
+        #gen_sentences[i]['sentence'] = sent['sentence']
+        #gen_sentences[i]['speaker'] = fspk
+        sindex = next((index for (index, d) in enumerate(speakers) if d["label"] == fspk), None)
+
+        #print(f"Sindex:{sindex}, fspk:{fspk}, i:{i}, gen_sentence:{gen_sentences[i]}")    
+        #gen_sentences[i]['name'] = speakers[sindex]['name']
+
+        gen_sentences.append({"speaker": fspk, "name": speakers[sindex]['name'], "sentence": sent['sentence'], "first_sentence": "true",
+                        "quiet_time": 0, "start": start_time, "end": end_time, "senti": "None", "sent_no": 0, "confidence": 0})
+
+        if i!=0:
+            gen_sentences[i]["end"]= gen_sentences[i-1]["end"] 
+
+        speaker = gen_sentences[i]['speaker']
+
+        stn_no_speaker[speaker] = stn_no_speaker[speaker] + 1
+
+        gen_sentences[i]["sent_no"] = stn_no_speaker[speaker]
+
+        if i != 0:
+            gen_sentences[i]["quiet_time"] = round((gen_sentences[i]["start"] - gen_sentences[i-1]["end"])/1000)
+        else:
+            gen_sentences[i]["quiet_time"] = 0
+
+        i = i + 1
+    
+    gen_sentences[-1]['end'] = gen_sentences[-1]['start'] + 1000*len(gen_sentences[-1]["sentence"])//10
+
+    intv_duration = math.ceil(gen_sentences[-1]['end']/60000)
+
+    try:
+        gs_cyp, gs_mac = enc(cyp_key, aad, nonce, dict_to_binary(gen_sentences))
+
+    except Exception as e:
+        print(f"SentenceUpdate Encryp Error::{e}")
+        context['result'] ='fail'
+        context['msg'] = "SentenceUpdate Encryp Error"
+        #return HttpResponse("SentenceUpdate Encryp Error")
+        return context
+
+    try:
+        timestr = datetime.now().strftime('\%Y\%m\%d')
+        save_path = MEDIA_ROOT + f"\interviews\\files{timestr}\Realtime_{title}.faj"
+        with open(save_path, 'wb') as outfile1:
+            outfile1.write(gs_cyp)
+    except Exception as e:
+        print(f"SentenceUpdate Write Error::{e}")
+        context['result'] ='fail'
+        context['msg'] = "SentenceUpdate Write Error"            
+        #return HttpResponse("SentenceUpdate Write Error")
+        return context
+
+    try:
+        clt = Client.objects.get(name='고객미정', counselor=current_user)
+    except ObjectDoesNotExist:
+        clt = Client.objects.create(name='고객미정', counselor=current_user)
+
+    intv = Interviews.objects.create(content_div=save_path, duration=intv_duration, client=clt, author=pauthor, client_name='고객미정',gs_cmk=gs_mac, quiet_basis=0, title= title)        
+
+    context['result'] ='pass'
+    context['msg'] = f"{intv.pk}"    
+    return context
 
 def test_storage(request):
 
@@ -1400,18 +1430,28 @@ class InterviewsUpdate(UpdateView):
         res = Manager.objects.filter(mid=self.request.user).get()
         idata = Interviews.objects.filter(pk=self.kwargs['pk']).get()
 
+
         try:
 
-            with open(idata.content, 'rb') as sent_file:
-                rdata = sent_file.read()
-                get_data = dec(cyp_key, aad, nonce, rdata, idata.gd_cmk)
-                get_data = get_data.decode("utf-8")
             with open(idata.content_div, 'rb') as sent_file:
                 rdata = sent_file.read()
                 div_data = dec(cyp_key, aad, nonce, rdata, idata.gs_cmk)
                 div_data = div_data.decode("utf-8")
         except Exception as e:
             print(f"Interv Detail Open Error::{e}")
+            div_data = ''
+
+
+        try:
+
+            with open(idata.content, 'rb') as sent_file:
+                rdata = sent_file.read()
+                get_data = dec(cyp_key, aad, nonce, rdata, idata.gd_cmk)
+                get_data = get_data.decode("utf-8")
+
+        except Exception as e:
+            print(f"Getdata Detail Open Error::{e}")
+            get_data = ''
 
         #sent_data = binary_to_dict(sent_data)
 

@@ -220,7 +220,7 @@ window.addEventListener("DOMContentLoaded", () => {
       let speakers = ['0','1','2']
       // let output='<text>'+hours+':'+minutes+':'+seconds;
       let output= '<div class="row my-2"><span class="d-flex justify-content-between align-items-center mb-1">'
-      output+= '<p class="d-inline-block py-1 px-2 m-0 rounded-pill text-white" style="background-color: #9f948f;"><i class="fas fa-clock fa-sm symb"></i>'+ hours+':'+minutes+':'+seconds+'</p>'
+      output+= '<p class="d-inline-block py-1 px-2 m-0 rounded-pill text-white" style="background-color: #9f948f;"><i class="fas fa-clock symb stime">'+ hours+':'+minutes+':'+seconds+'</i></p>'
       output+= '<div class="rounded w-25"><select class="form-select opts" aria-label="Default select example">'
 
       for(var j=0; j<speakers.length; j++) {
@@ -274,6 +274,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
 function contentSave() {
     var sentences = document.getElementsByClassName('isentence');
+    var stime = document.getElementsByClassName('stime');
     console.log("Sentence Length0:" + sentences.length)
     var sentenceList = new Array() ;
     for (var i=0; i<sentences.length; i++) {
@@ -283,6 +284,7 @@ function contentSave() {
         data.speaker = $(oid).val();
         console.log(data.speaker);
         data.sentence = sentences[i].value;
+        data.start_time = stime[i].innerHTML
         data.generated = sentences[i].getAttribute("gened");
         sentenceList.push(data) ;
     }
