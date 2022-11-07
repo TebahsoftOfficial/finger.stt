@@ -319,9 +319,21 @@ def RealtimeAnalysis(all_sentence, title, current_user, pauthor):
         #return HttpResponse("SentenceUpdate Encryp Error")
         return context
 
+    timestr = datetime.now().strftime('\%Y\%m\%d')
+    save_path = MEDIA_ROOT + f"\interviews\\files{timestr}\\" #Realtime_{title}.faj"
+    
     try:
-        timestr = datetime.now().strftime('\%Y\%m\%d')
-        save_path = MEDIA_ROOT + f"\interviews\\files{timestr}\Realtime_{title}.faj"
+        if not(os.path.isdir(save_path)):
+            os.makedirs(save_path)
+    except Exception as e:
+        print(f"Make Dir Error::{e}")
+        context['result'] ='fail'
+        context['msg'] = "Make Dir Error"            
+        return context
+
+
+    try:
+        save_path = os.path.join(save_path, f"Realtime_{title}.faj")
         with open(save_path, 'wb') as outfile1:
             outfile1.write(gs_cyp)
     except Exception as e:
