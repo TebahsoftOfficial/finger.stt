@@ -28,6 +28,7 @@ urlpatterns = [
     path('interviews/', include('interviews.urls')),
     path('accounts/', include('allauth.urls')),
     path('', views.start),
+    path('nologin/<str:id>/', views.nologin),    
     path('test/storage/',views.test_storage),
     path('inaction/',views.inaction),
     path('similar/<str:engine>/<str:sid>/', views.similarity)

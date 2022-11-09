@@ -711,6 +711,36 @@ def delete(request, interview_pk):
     return redirect('/interviews')
 
 
+
+def nologin(request, id):
+    logout(request)
+    try:
+        ruser = User.objects.get(username=id)
+    except ObjectDoesNotExist:
+        return redirect('/interviews/list/norm')
+
+    cuser = authenticate(username=ruser.username, password='stt#test#2021')
+    #cuser = get_user_from_hash(ruser.password)
+
+    #cuser = request.user
+
+    if cuser is not None:
+        #request.user = ruser
+        login(request, cuser)
+        try:
+            res = Manager.objects.get(mid=ruser)
+        except ObjectDoesNotExist:
+            #res = Manager.objects.create(mid=request.user, use_time=0, max_time=300)   # 300 minutes
+            res = Manager.objects.create(mid=ruser, use_time=0, max_time=0, paid_time=300)  # 300 minutes
+            #interview = Interviews.objects.get(pk='4e74c4c09ad84c3da6b5c6d0cfcc6d8d')
+            #copy_interview(interview, request.user)
+
+        if date.today() >= res.expire_at:
+            Manager.objects.filter(mid=ruser).update(use_time=0, max_time=0)
+
+    return redirect('/interviews/list/norm')
+
+
 # First connect
 def start(request):
     cuser = request.user
