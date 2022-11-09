@@ -330,7 +330,10 @@ function contentSave() {
     var formData =new FormData(document.getElementById("sentform"));
     formData.append('all_sentence',jsonData);
     title = $('#id_title').val()
-    if (title == '') title = '제목없음'
+    if (title == '') {
+      tdate = new Date().toLocaleString()
+      title = '제목없음-'+tdate.replace(/:/g,'-')
+    }
     formData.append('title', title);
 
     $.ajax({
