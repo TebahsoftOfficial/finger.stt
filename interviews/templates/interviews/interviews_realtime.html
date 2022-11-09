@@ -35,14 +35,30 @@ textarea.autosize
       </form>
       <div class="mt-2" id="div_language">
         <label for="select_language" class="form-label h4 mb-3" title="select language">언어선택</label>
-        <select class="form-select" id="select_language" onchange="updateCountry();"></select>
+        <select class="form-select" id="select_language" onchange="updateCountry();" ></select>
         <select class="form-select mt-2" id="select_dialect"></select>
       </div>
     
       <p class="mt-2 h4">대화 내용</p>
-      <!--div class="p-3" style="border: 1px solid gray; height: 300px; border-radius: 8px;">
-        <span id="final" class="text-dark"></span>
+
+      <!--div class="d-flex justify-content-center">
+        <button class="btn btn-outline-custom" id="start">
+          <i class="fas fa-circle"></i>
+        </button>
+        <button class="btn btn-outline-custom" id="stop">
+            <i class="fas fa-stop"></i>
+        </button>
+        <button class="btn btn-outline-custom" id="csave" onclick="contentSave();">
+            <i class="fas fa-cloud-upload-alt"></i>
+        </button>
       </div-->
+
+      <p id="sttLoader" class="alert alert-warning m-2 text-center" style="display: none">Listening ...</p>
+      <div id="final">
+      </div>
+      
+      <span id="interim" class="text-secondary"></span>
+      
       <div class="d-flex justify-content-center">
         <button class="btn btn-outline-custom" id="start">
           <i class="fas fa-circle"></i>
@@ -54,12 +70,8 @@ textarea.autosize
             <i class="fas fa-cloud-upload-alt"></i>
         </button>
       </div>
-      <p id="sttLoader" class="alert alert-warning m-2 text-center" style="display: none">Listenting ...</p>
-      <div id="final">
-      </div>
-      
-      <span id="interim" class="text-secondary"></span>
-      
+
+
       <p id="stop_time"></p>
       <p id="end_time"></p>
       
@@ -126,9 +138,10 @@ function speech_result(event){
 */
 let speechRecognition;
 
+let select_language = document.querySelector('#select_language');
+let select_dialect = document.querySelector('#select_dialect');
 
 function updateCountry() {
-
 
   for (var i = select_dialect.options.length - 1; i >= 0; i--) {
     select_dialect.remove(i);
@@ -138,8 +151,10 @@ function updateCountry() {
     select_dialect.options.add(new Option(list[i][1], list[i][0]));
   }
   select_dialect.style.visibility = list[1].length == 1 ? 'hidden' : 'visible';
-  speechRecognition.lang = document.querySelector("#select_dialect").value;
-  console.log("UpdateCountry!: "+document.querySelector("#select_dialect").value);    
+
+
+  speechRecognition.lang = select_dialect.value;
+  console.log("UpdateCountry!: "+select_dialect.value);    
 }
 function resize(obj) {
       obj.style.height = "1px";
@@ -147,8 +162,8 @@ function resize(obj) {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-    let select_language = document.querySelector('#select_language');
-    let select_dialect = document.querySelector('#select_dialect');
+    //let select_language = document.querySelector('#select_language');
+    //let select_dialect = document.querySelector('#select_dialect');
     let start_time = new Date();   
     let stop = false;
     let stop_time;
@@ -172,8 +187,9 @@ window.addEventListener("DOMContentLoaded", () => {
     // Set the properties for the Speech Recognition object
     speechRecognition.continuous = true;
     speechRecognition.interimResults = false;
-    speechRecognition.lang = document.querySelector("#select_dialect").value;
-    console.log("Language: "+ document.querySelector("#select_dialect").value)
+    //speechRecognition.lang = select_dialect.value //document.querySelector("#select_dialect").value;
+    //console.log("Language: "+ select_dialect.value.value)
+    console.log("Language: "+ speechRecognition.lang)
 
     // Callback Function for the onStart Event
     speechRecognition.onstart = () => {
@@ -189,7 +205,8 @@ window.addEventListener("DOMContentLoaded", () => {
       console.log("End speech")
       if (stop == false && is_pause=='false') speechRecognition.start();
       else if (stop == true) $('#csave').prop('disabled',false);
-      document.querySelector("#sttLoader").style.display = "none";
+      
+      //document.querySelector("#sttLoader").style.display = "none";
     };
     
     speechRecognition.onresult = (event) => {
@@ -257,6 +274,7 @@ window.addEventListener("DOMContentLoaded", () => {
     document.querySelector("#start").onclick = () => {
       // Start the Speech Recognition
       if (is_pause =='true') {
+        $('#sttLoader').html("Listening...")
         $('#csave').prop('disabled',true);
         stop = false;
         document.querySelector("#start").innerHTML = `<i class="fas fa-pause"></i>`
@@ -265,6 +283,7 @@ window.addEventListener("DOMContentLoaded", () => {
       }
       else {
         console.log("Rec Pause!")
+        $('#sttLoader').html("Pausing")
         document.querySelector("#start").innerHTML = `<i class="fas fa-circle"></i>`        
         speechRecognition.stop();
         is_pause = 'true'        
@@ -281,6 +300,7 @@ window.addEventListener("DOMContentLoaded", () => {
       speechRecognition.stop();
       if (is_pause=='true') $('#csave').prop('disabled',false);
       is_pause = 'true'    
+      document.querySelector("#sttLoader").style.display = "none";
     };
   } 
   else {
