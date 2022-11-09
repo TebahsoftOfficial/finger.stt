@@ -481,7 +481,7 @@ function good_sent(mode) {
 
     for(i=0; i<sents.length; i++) {
         if (sents[i].text!='') {
-            if( sents[i].name != prev_name) {
+            if( sents[i].name != prev_name  || '{{ is_solo }}'=='true') {
                 output+= '<div class="text-nowrap custom-sent-header"><b class="me-2"><i class="fas fa-user fa-sm symb"></i>' + sents[i].name + String(sents[i].sent_no).padStart(3,'0')+'</b>';
                 output+= '<i class="fas fa-clock fa-sm symb"></i>'+ Math.floor((sents[i].start)/60000) + "'" + Math.floor(((sents[i].start)%60000)/1000) + "''" + '</div>'
              }
@@ -508,7 +508,7 @@ function good_sent(mode) {
     speakers = JSON.parse('{{ interviews.speakers }}'.replace(/&quot;/g,'"').replace(/&amp;quot;/g,'"').replace(/&#39;/g,'"').replace(/&#x27;/g,'"'));
     for(var i=0; i<sents.length; i++) {
         if (sents[i].text!='') {
-            if( sents[i].name != prev_name) {
+            if( sents[i].name != prev_name  || '{{ is_solo }}'=='true') {
                 //output+= '<div class="text-muted text-nowrap mt-2"><b>' + sents[i].name + String(sents[i].sent_no).padStart(3,'0')+'</b>'
                 output+= '<div class="text-nowrap custom-sent-header"><b class="me-2"><i class="fas fa-user fa-sm symb"></i>' + sents[i].name +'</b>'
                 output+= '<i class="fas fa-clock fa-sm symb"></i>'+ Math.floor((sents[i].start)/60000) + '\'' + Math.floor(((sents[i].start)%60000)/1000) + '\'\'' + '</div>'

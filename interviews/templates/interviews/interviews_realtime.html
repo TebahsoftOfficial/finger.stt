@@ -144,7 +144,7 @@ function updateCountry() {
 function resize(obj) {
       obj.style.height = "1px";
       obj.style.height = (2+obj.scrollHeight)+"px";
-    }
+}
 
 window.addEventListener("DOMContentLoaded", () => {
     let select_language = document.querySelector('#select_language');
@@ -152,7 +152,7 @@ window.addEventListener("DOMContentLoaded", () => {
     let start_time = new Date();   
     let stop = false;
     let stop_time;
-
+    let is_pause = 'true'
     for (var i = 0; i < langs.length; i++) {
       select_language.options[i] = new Option(langs[i][0], i);
     }
@@ -187,7 +187,7 @@ window.addEventListener("DOMContentLoaded", () => {
     speechRecognition.onend = () => {
       // Hide the sttLoader Element
       console.log("End speech")
-      if (stop == false) speechRecognition.start();
+      if (stop == false && is_pause=='false') speechRecognition.start();
       else if (stop == true) $('#csave').prop('disabled',false);
       document.querySelector("#sttLoader").style.display = "none";
     };
@@ -206,6 +206,7 @@ window.addEventListener("DOMContentLoaded", () => {
       //let hours = elaps.getHours(); 
       //let minutes = ('0'+elaps.getMinutes()).slice(-2);  // 분
       //let seconds = ('0'+elaps.getSeconds()).slice(-2);  // 초
+  
 
       // Loop through the results from the speech recognition object.
       for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -217,7 +218,7 @@ window.addEventListener("DOMContentLoaded", () => {
         }
       }
 
-      let speakers = ['0','1','2']
+      let speakers = ['A','B','C']
       // let output='<text>'+hours+':'+minutes+':'+seconds;
       let output= '<div class="row my-2"><span class="d-flex justify-content-between align-items-center mb-1">'
       output+= '<p class="d-inline-block py-1 px-2 m-0 rounded-pill text-white" style="background-color: #9f948f;"><i class="fas fa-clock symb stime">'+ hours+':'+minutes+':'+seconds+'</i></p>'
@@ -229,7 +230,7 @@ window.addEventListener("DOMContentLoaded", () => {
       }
       output+= '</select></div></span>'
 
-      output+= '<div class="col-12"><textarea class="isentence sent-edit-row p-2" rows="1" onclick="resize(this)">'
+      output+= '<div class="col-12"><textarea class="isentence sent-edit-row p-2" rows="1" onchange="resize(this)">'
       output+= final_transcript+'</textarea>'   // enter code 13 is inserted
       output+= '</div></div>'
 
@@ -247,16 +248,27 @@ window.addEventListener("DOMContentLoaded", () => {
         $('#end_time').html('Stop Time =>'+s_seconds+'.'+s_milli
           +'<br>Result Time=>'+e_seconds+'.'+e_milli);        
       }
-
+      sentences = document.getElementsByClassName('isentence');
+      resize(sentences[sentences.length-1])
+      document.body.scrollTop = document.body.scrollHeight;
     };
 
     // Set the onClick property of the start button
     document.querySelector("#start").onclick = () => {
       // Start the Speech Recognition
-      $('#csave').prop('disabled',true);
-      stop = false;
-      document.querySelector("#start").innerHTML = `<i class="fas fa-pause"></i>`
-      speechRecognition.start();
+      if (is_pause =='true') {
+        $('#csave').prop('disabled',true);
+        stop = false;
+        document.querySelector("#start").innerHTML = `<i class="fas fa-pause"></i>`
+        speechRecognition.start();
+        is_pause = 'false'
+      }
+      else {
+        console.log("Rec Pause!")
+        document.querySelector("#start").innerHTML = `<i class="fas fa-circle"></i>`        
+        speechRecognition.stop();
+        is_pause = 'true'        
+      }
     };
     // Set the onClick property of the stop button
     document.querySelector("#stop").onclick = () => {
@@ -267,6 +279,8 @@ window.addEventListener("DOMContentLoaded", () => {
       stop_time = stop_time - start_time;      
       console.log("Rec STOP!")
       speechRecognition.stop();
+      if (is_pause=='true') $('#csave').prop('disabled',false);
+      is_pause = 'true'    
     };
   } 
   else {

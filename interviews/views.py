@@ -281,12 +281,12 @@ def RealtimeAnalysis(all_sentence, title, current_user, pauthor):
         end_time = start_time
         #gen_sentences[i]['sentence'] = sent['sentence']
         #gen_sentences[i]['speaker'] = fspk
-        sindex = next((index for (index, d) in enumerate(speakers) if d["label"] == fspk), None)
+        sindex = next((index for (index, d) in enumerate(speakers) if d["name"] == fspk), None)
 
         #print(f"Sindex:{sindex}, fspk:{fspk}, i:{i}, gen_sentence:{gen_sentences[i]}")    
         #gen_sentences[i]['name'] = speakers[sindex]['name']
 
-        gen_sentences.append({"speaker": fspk, "name": speakers[sindex]['name'], "sentence": sent['sentence'], "first_sentence": "true",
+        gen_sentences.append({"speaker": speakers[sindex]['label'], "name": fspk, "sentence": sent['sentence'], "first_sentence": "true",
                         "quiet_time": 0, "start": start_time, "end": end_time, "senti": "None", "sent_no": 0, "confidence": 0})
 
         if i!=0:
@@ -350,7 +350,7 @@ def RealtimeAnalysis(all_sentence, title, current_user, pauthor):
 
     speakers = json.dumps(speakers).replace(r"'false'", r'"false"').replace(r"'true'", r'"true"')
 
-    intv = Interviews.objects.create(content_div=save_path, duration=intv_duration, client=clt, author=pauthor, \
+    intv = Interviews.objects.create(content='realtime', content_div=save_path, duration=intv_duration, client=clt, author=pauthor, \
         speakers=speakers, client_name='고객미정',gs_cmk=gs_mac, quiet_basis=0, title= title)        
 
     context['result'] ='pass'
@@ -1474,12 +1474,16 @@ class InterviewsUpdate(UpdateView):
 
         #print(f"GetContext::{sent_data}")
         context['intv_sentence'] = div_data
-        context['intv_data'] = get_data
+        #context['intv_data'] = get_data
         context['clients_list'] = Client.objects.filter(counselor=self.request.user)
         context['client_unknown'] = Interviews.objects.filter(client_name='', author=res)
         context['client_info'] = idata.client #clt
         context['manager'] = res
         context['mode'] = self.kwargs['mode']
+        if idata.content=='realtime':
+            context['is_solo'] = 'true'
+        else :
+            context['is_solo'] = 'false'
         #print(f"ContextData:: {idata.client.name}")
         return context
     
