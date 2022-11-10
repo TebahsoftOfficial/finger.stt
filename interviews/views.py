@@ -791,7 +791,7 @@ def clientlist(request, msg):
             clt = Client.objects.create(name='고객미정', counselor=cuser)
 
         speaker_nums= nums_speaker #2
-        ret, pauthor, get_data, group_sent, timestr, sentimental, intv_duration, speakers, all_confidence = InterviewAnalysis(cuser, speaker_nums, intv.file_upload.name, stt_lang, stt_engine)
+        ret, pauthor, get_data, group_sent, timestr, sentimental, intv_duration, speakers, all_confidence = InterviewAnalysis(cuser, speaker_nums, intv.file_upload.name, stt_lang)
 
         if ret == -1:
             print(f'Return Fail')
