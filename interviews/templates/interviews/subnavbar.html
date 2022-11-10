@@ -1,14 +1,14 @@
 {% load socialaccount %}
 <!-- <h3>{{client_info.name}}</h3> -->
 <div class="row mx-auto">
-  <a href="{{ interviews.get_absolute_url }}" class="col-4 p-0">
+  <a href="{{ interviews.get_absolute_url }}" class="col-4 p-0 mx-auto">
     <button class="btn btn-outline-custom w-100">상담전체</button>
   </a>
   {% if interviews.stt_lang == 'ko-KR' %}
-    <a href="{{ interviews.get_sentimental_url }}" class="col-4 p-0">
+    <a href="{{ interviews.get_sentimental_url }}" class="col-4 p-0" style="display:none;">
       <button class="btn btn-outline-custom w-100">감정분석</button>
     </a>
-    <a href="{{ interviews.get_wordcloud_url }}" class="col-4 p-0">
+    <a href="{{ interviews.get_wordcloud_url }}" class="col-4 p-0"  style="display:none;">
       <button class="btn btn-outline-custom w-100">단어분석</button>
     </a>
   {% else %}

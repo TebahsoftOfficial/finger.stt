@@ -332,7 +332,9 @@ function contentSave() {
     title = $('#id_title').val()
     if (title == '') {
       tdate = new Date().toLocaleString()
-      title = '제목없음-'+tdate.replace(/:/g,'-')
+      tdate = tdate.replace(/:/g,'-')
+      tdate = tdate.replace(/\//g,'.')
+      title = '제목없음-'+tdate
     }
     formData.append('title', title);
 
