@@ -107,6 +107,7 @@ input:focus {
 }
 .sub-menu-item {
   background-color: #7c7470;
+  height: 60px;
   display: flex;
   justify-content: center;
   align-items: center;
