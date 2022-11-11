@@ -230,13 +230,15 @@ textarea.autosize
                     class="col-6 btn btn-outline-custom rounded-pill"
                 >
                     <i class="fa fa-exchange-alt symb"></i>뷰모드</button>
-                <button
-                    id="sentsave"
-                    onclick="contentSave();"
-                    type="button"
-                    class="col-6 btn btn-outline-custom rounded-pill">
-                    <i class="fas fa-save symb"></i>
-                    저장</button>
+                {% if mode == "edit" %}
+                    <button
+                        id="sentsave"
+                        onclick="contentSave();"
+                        type="button"
+                        class="col-6 btn btn-outline-custom rounded-pill">
+                        <i class="fas fa-save symb"></i>
+                        저장</button>
+                {% endif %}
             </div>
         </div>
         <hr>
