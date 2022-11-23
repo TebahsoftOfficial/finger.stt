@@ -6,7 +6,7 @@ finger.stt 는 음성인식 대화 서비스로서 인식된 음성으로 부터
 - 대화 편집 기능
 - 화자 추가 및 편집 기능
 
-![fingerstt01](https://user-images.githubusercontent.com/88182481/176337441-c43cf729-5124-400a-ab62-b18c18585fa4.png)
+![fingerstt01](https://user-images.githubusercontent.com/117243416/203499136-5860bdb1-102b-400e-bdb8-0ddbac8ce1f9.png)
 
 ## Installation
 - Github에서 소스 코드 가져오기
