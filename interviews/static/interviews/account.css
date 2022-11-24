@@ -4,6 +4,12 @@
   font-weight: normal;
   font-style: normal;
 }
+@font-face {
+    font-family: 'MonoplexKR-Regular';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_Monoplex-kr@1.0/MonoplexKR-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+}
 
 *,
 *::before,
@@ -12,7 +18,7 @@ box-sizing: border-box;
 }
 
 html, body {
-  font-family: 'S-CoreDream-3Light';
+  font-family: 'MonoplexKR-Regular';
   font-size: 15px;
   box-sizing: border-box;
   padding: 0;
