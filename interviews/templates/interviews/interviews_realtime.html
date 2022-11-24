@@ -1,19 +1,6 @@
 {% extends 'interviews/interviews_base.html' %}
 {% load mathfilters %}
 {% load static %}
-{% block css_content %}
-<!-- <style>
-textarea.autosize
-{
-    border:1px solid #999999;
-    width:98%;
-    margin:5px 0;
-    padding:1%;
-}
-
-</style> -->
-
-{% endblock %}
 
 {% block main_area %}
 <div class="container py-2 py-lg-5">
@@ -40,18 +27,6 @@ textarea.autosize
       </div>
     
       <p class="mt-2 h4">대화 내용</p>
-
-      <!--div class="d-flex justify-content-center">
-        <button class="btn btn-outline-custom" id="start">
-          <i class="fas fa-circle"></i>
-        </button>
-        <button class="btn btn-outline-custom" id="stop">
-            <i class="fas fa-stop"></i>
-        </button>
-        <button class="btn btn-outline-custom" id="csave" onclick="contentSave();">
-            <i class="fas fa-cloud-upload-alt"></i>
-        </button>
-      </div-->
 
       <p id="sttLoader" class="alert alert-warning m-2 text-center" style="display: none">Listening ...</p>
       <div id="final">
@@ -94,48 +69,6 @@ textarea.autosize
 
 <script>
 
-/*    
-let listening;
-let recognition;
-let main = document.getElementsByTagName("main")[0];
-function speech_listen() {
-    listening ? speech_stop() : speech_start();
-            listening = !listening;
-}
-
-function speech_stop() {
-    main.classList.remove("speaking");
-    recognition.stop();
-    button.textContent = "Start listening";    
-}
-
-function speech_start() {
-    main.classList.add("speaking");
-    recognition.start();
-    button.textContent = "Stop listening";
-}
-
-function speech_result(event){
-    var text='';
-    var res;
-    var str='';
-    //$('#result').html('');
-
-
-    for (res of event.results) {
-        console.log(res.isFinal);
-        if (res.isFinal) {
-            text = res[0].transcript;
-            str = '<div class="col-8 final">'
-                str += '<textarea class="isentence autosize" gened="false" cols="100">' +text + '</textarea>'
-            str += '</div>'                
-        }
-    } 
-  
-    $('#result').append(str);
-
-}
-*/
 let speechRecognition;
 
 let select_language = document.querySelector('#select_language');
@@ -162,8 +95,6 @@ function resize(obj) {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-    //let select_language = document.querySelector('#select_language');
-    //let select_dialect = document.querySelector('#select_dialect');
     let start_time = new Date();   
     let stop = false;
     let stop_time;
@@ -205,8 +136,6 @@ window.addEventListener("DOMContentLoaded", () => {
       console.log("End speech")
       if (stop == false && is_pause=='false') speechRecognition.start();
       else if (stop == true) $('#csave').prop('disabled',false);
-      
-      //document.querySelector("#sttLoader").style.display = "none";
     };
     
     speechRecognition.onresult = (event) => {
@@ -220,9 +149,6 @@ window.addEventListener("DOMContentLoaded", () => {
       let seconds = sec_elaps % 60;
       let minutes = Math.floor(sec_elaps/60) % 60
       let hours = Math.floor(sec_elaps/3600);
-      //let hours = elaps.getHours(); 
-      //let minutes = ('0'+elaps.getMinutes()).slice(-2);  // 분
-      //let seconds = ('0'+elaps.getSeconds()).slice(-2);  // 초
   
 
       // Loop through the results from the speech recognition object.
@@ -252,7 +178,6 @@ window.addEventListener("DOMContentLoaded", () => {
       output+= '</div></div>'
 
       // Set the Final transcript and Interim transcript.
-      //document.querySelector("#final").innerHTML = final_transcript;
       $('#final').append(output)
       document.querySelector("#interim").innerHTML = interim_transcript;
 
@@ -260,8 +185,7 @@ window.addEventListener("DOMContentLoaded", () => {
         s_seconds = Math.floor(stop_time/1000);
         s_milli = stop_time%1000;
         e_seconds = Math.floor(elaps/1000);
-        e_milli = elaps%1000;
-        //$('#end_time').html('Stop Time =>'+hours+':'+minutes+':'+seconds);        
+        e_milli = elaps%1000;    
         $('#end_time').html('Stop Time =>'+s_seconds+'.'+s_milli
           +'<br>Result Time=>'+e_seconds+'.'+e_milli);        
       }
