@@ -7,8 +7,8 @@
 
 {% block css_content %}
      <link href="{% static 'interviews/bootstrap/assets/css/sidebar.min.css' %}" rel="stylesheet" type="text/css" />
-<link href="{% static 'interviews/bootstrap/assets/css/vendor/quill.core.css' %}" rel="stylesheet" type="text/css" />
-<link href="{% static 'interviews/bootstrap/assets/css/vendor/quill.snow.css' %}" rel="stylesheet" type="text/css" />
+     <link href="{% static 'interviews/bootstrap/assets/css/vendor/quill.core.css' %}" rel="stylesheet" type="text/css" />
+     <link href="{% static 'interviews/bootstrap/assets/css/vendor/quill.snow.css' %}" rel="stylesheet" type="text/css" />
     <link href="{% static 'interviews/bootstrap/assets/css/vendor/select.bootstrap5.css' %}" rel="stylesheet" type="text/css" />
     <link href="{% static 'interviews/bootstrap/assets/css/vendor/dataTables.bootstrap5.css' %}" rel="stylesheet" type="text/css" />
     <link href="{% static 'interviews/bootstrap/assets/css/vendor/responsive.bootstrap5.css' %}" rel="stylesheet" type="text/css" />
@@ -98,7 +98,7 @@
                             <div class="card card-body">
                                 <div id="editor" style="height: 200px;" enable:false >
                                 {% autoescape off %}
-                                {{client_info.comment}}
+                                   {{client_info.comment}}
                                 {% endautoescape %}
                                 </div>
 
@@ -107,20 +107,6 @@
                     </div>
                 </div>
             </div>
-
-            <!--div class="accordion-item col-10">
-            <h2 class="accordion-header" id="headingOne">
-                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                &nbsp&nbsp{{client_info.name}}의 고객노트
-                </button>
-            </h2>
-            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
-                <div class="accordion-body">
-                {{ client_info.comment|linebreaks }}
-                </div>
-            </div>
-            </div-->
-
 
             <table id="scroll-horizontal-datatable" class="table nowrap w-100" data-order='[2,"desc"]'>
                 <thead>
@@ -136,24 +122,24 @@
         
                     {% for iv in client_interviews %}
                         {% if user.username == iv.author.mid.username and iv.delete_flag != "true" %}
-                    <tr>
-                        <td>
-                            <i class="dripicons-document" ></i> <a href="{{ iv.get_absolute_url }}" >{{ iv.title }}</a>
-                        </td>
-                        <td style="text-align: right; ">{{ iv.duration }}</td>
-                        <td>
-        
-                            <center> <span class="badge bg-secondary">{{ iv.created_at|date:"Y-m-d" }}</span></center>
-                        </td>
-                        <td>
-                            <center><a href="{% url 'interview_delete' iv.pk %}" onclick="return confirm('정말 삭제하시겠습니까?')">
-                            <i class="dripicons-trash" ></i></a></center>
-                        </td>
-        
-                    </tr>
-                    {% endif %}
-                    {% empty %}
-                        <tr>No articles yet.</tr>
+                              <tr>
+                                  <td>
+                                      <i class="dripicons-document" ></i> <a href="{{ iv.get_absolute_url }}" >{{ iv.title }}</a>
+                                  </td>
+                                  <td style="text-align: right; ">{{ iv.duration }}</td>
+                                  <td>
+
+                                      <center> <span class="badge bg-secondary">{{ iv.created_at|date:"Y-m-d" }}</span></center>
+                                  </td>
+                                  <td>
+                                      <center><a href="{% url 'interview_delete' iv.pk %}" onclick="return confirm('정말 삭제하시겠습니까?')">
+                                      <i class="dripicons-trash" ></i></a></center>
+                                  </td>
+
+                              </tr>
+                         {% endif %}
+                         {% empty %}
+                              <tr>No articles yet.</tr>
                     {% endfor %}
         
                 </tbody>
