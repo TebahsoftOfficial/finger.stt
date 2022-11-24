@@ -20,42 +20,14 @@
 
 <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
   {% csrf_token %}
-  <!-- {{ form.as_p }} -->
-    <table>
-      <tr>
-        <td>
-          <label for="id_email">이메일</label>
-        </td>
-        <td>
-          <input type="email" name="email" placeholder="abc@def.com" autocomplete="email" required="" id="id_email">
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <label for="id_username">ID</label>
-        </td>
-        <td>
-          <input type="text" name="username" placeholder="" autocomplete="username" minlength="1" maxlength="150" required="" id="id_username">
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <label for="id_password1">비밀번호</label>
-        </td>
-        <td>
-          <input type="password" name="password1" placeholder="" autocomplete="new-password" required="" id="id_password1">
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <label for="id_password2">비밀번호 확인</label>
-        </td>
-        <td>
-          <input type="password" name="password2" placeholder="" required="" id="id_password2">
-        </td>
-      </tr>
-    </table>
-    
+  <label for="id_email">이메일</label>
+  <input type="email" name="email" placeholder="abc@def.com" autocomplete="email" required="" id="id_email">
+  <label for="id_username">ID</label>
+  <input type="text" name="username" placeholder="" autocomplete="username" minlength="1" maxlength="150" required="" id="id_username">
+  <label for="id_password1">비밀번호</label>
+  <input type="password" name="password1" placeholder="" autocomplete="new-password" required="" id="id_password1">
+  <label for="id_password2">비밀번호 확인</label>
+  <input type="password" name="password2" placeholder="" required="" id="id_password2">
 
 
   {% if redirect_field_value %}
