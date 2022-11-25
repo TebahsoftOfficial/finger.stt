@@ -15,6 +15,8 @@ finger.stt 는 음성인식 대화 서비스로서 인식된 음성으로 부터
 > mkdir github
 > cd github
 > git clone https://github.com/TebahSoft/finger.stt.git
+# Token 을 이용할 경우
+> git clone https://Token@github.com/TebahSoft/finger.stt.git
 ```
 
 - 가상환경 설치
