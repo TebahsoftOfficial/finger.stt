@@ -239,6 +239,8 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 - 각종 key, id 정보를 환경변수로 작성 저장
 ```
 # 반드시 환경변수='value' 붙여서 작성할것
+# Django key는 프로젝트를 임의로 생성하고 프로젝트 폴더의 settings.py 에서 생성된 keyr값을 사용하면 됨
+# Djanog 프로젝트 생성:  django-admin startproject TestProject
 DJANGO_KEY=Django key
 DB_NAME=MySQL 데이터베이스 네임
 DB_USER=MySQL 아이디
