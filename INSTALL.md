@@ -46,7 +46,8 @@ finger.stt 는 음성인식 대화 서비스로서 인식된 음성으로 부터
 > pip install boto3==1.6.19
 > pip install python-dateutil==2.8.2
 #konlpy 설치에 아래와 같은 Jpype 설치 필요. 참조 https://ingu627.github.io/tips/install_konlpy/
-#mecab 설치 https://github.com/Pusnow/mecab-python-msvc/releases/tag/mecab_python-0.996_ko_0.9.2_msvc-3
+#mecab 설치 https://cleancode-ws.tistory.com/97
+# https://github.com/Pusnow/mecab-python-msvc/releases/tag/mecab_python-0.996_ko_0.9.2_msvc-3
 ```
 
 - fingerai 폴더에 settings.py 파일 작성
