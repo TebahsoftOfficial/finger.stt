@@ -38,4 +38,4 @@ You can have the editor for STT scripts.
 
 ![Demo](https://github.com/TebahSoft/finger.stt/blob/main/finger.stt_Edit.gif?raw=true)
 
-You can visit the demo site [here](https://118.67.132.111/)
+You can visit the demo site [here](https://open.finger.solutions/)
