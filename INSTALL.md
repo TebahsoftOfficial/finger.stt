@@ -35,6 +35,9 @@ finger.stt 는 음성인식 대화 서비스로서 인식된 음성으로 부터
 > conda activate  finger_venv
 (2)
 > fvenv\Scripts\activate
+> source .\fvenv\Sciprts\activate
+Centos
+> source .\venv\bin\activate
 ```
 
 - 패키지 설치
