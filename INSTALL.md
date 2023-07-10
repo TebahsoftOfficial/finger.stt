@@ -50,6 +50,7 @@ Centos
 - wincertstore==0.2 삭제
 - pywinpty==1.1.4 삭제
 - pywin32 삭제
+- pythoncom, win32com 삭제
 
 > pip install -r requirements.txt
 # 리눅스에서 경우 pywinpty 설치시 아래와 같은 에러시 rust 설치  참조: https://www.linuxcapable.com/ko/how-to-install-rust-on-ubuntu-20-04/
