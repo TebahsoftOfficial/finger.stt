@@ -42,6 +42,7 @@ Centos
 
 - 패키지 설치
 ```
+- linux(CentOS)
 #Centos 에서 설치중에 mysql 관련 에러가 나면
 > yum -y install mariadb-devel
 위 명령 수행
