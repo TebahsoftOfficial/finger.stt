@@ -15,6 +15,8 @@ finger.stt 는 음성인식 대화 서비스로서 인식된 음성으로 부터
 > mkdir github
 > cd github
 > git clone https://github.com/TebahSoft/finger.stt.git
+# Token 을 이용할 경우
+> git clone https://Token@github.com/TebahSoft/finger.stt.git
 ```
 
 - 가상환경 설치
@@ -33,17 +35,34 @@ finger.stt 는 음성인식 대화 서비스로서 인식된 음성으로 부터
 > conda activate  finger_venv
 (2)
 > fvenv\Scripts\activate
+> source .\fvenv\Sciprts\activate
+Centos
+> source .\venv\bin\activate
 ```
 
 - 패키지 설치
 ```
+- linux(CentOS)
+#Centos 에서 설치중에 mysql 관련 에러가 나면
+> yum -y install mariadb-devel
+위 명령 수행
+- xlwings==0.24.9 삭제 (윈도우 엑셀 기능)
+- wincertstore==0.2 삭제
+- pywinpty==1.1.4 삭제
+- pywin32 삭제
+- pythoncom, win32com 삭제
+
 > pip install -r requirements.txt
 # 리눅스에서 경우 pywinpty 설치시 아래와 같은 에러시 rust 설치  참조: https://www.linuxcapable.com/ko/how-to-install-rust-on-ubuntu-20-04/
+    Centos 에서 설치 https://vaert.tistory.com/198
 # Cargo, the Rust package manager, is not installed or is not on PATH
 > conda install -c anaconda(or conda-forge) pywin32
+  => 리눅스에서 pywin32==302 호환되지 않을경우 225 로 변경 (python 3.8 버전 호환성 문제)
 > pip install boto3==1.6.19
 > pip install python-dateutil==2.8.2
 #konlpy 설치에 아래와 같은 Jpype 설치 필요. 참조 https://ingu627.github.io/tips/install_konlpy/
+#mecab 설치 https://cleancode-ws.tistory.com/97
+# https://github.com/Pusnow/mecab-python-msvc/releases/tag/mecab_python-0.996_ko_0.9.2_msvc-3
 ```
 
 - fingerai 폴더에 settings.py 파일 작성
@@ -239,6 +258,8 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 - 각종 key, id 정보를 환경변수로 작성 저장
 ```
 # 반드시 환경변수='value' 붙여서 작성할것
+# Django key는 프로젝트를 임의로 생성하고 프로젝트 폴더의 settings.py 에서 생성된 keyr값을 사용하면 됨
+# Djanog 프로젝트 생성:  django-admin startproject TestProject
 DJANGO_KEY=Django key
 DB_NAME=MySQL 데이터베이스 네임
 DB_USER=MySQL 아이디
