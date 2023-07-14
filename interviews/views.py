@@ -119,15 +119,24 @@ def jaccard_similarity(list1, list2):
     s2 = set(list2)
     return float(len(s1.intersection(s2)) / len(s1.union(s2)))
 
-
 def similarity(request, method, sid, label):
     doc_list = []
     intv = Interviews.objects.get(id=sid)
-    with open(intv.content, 'rb') as sent_file:
+
+    #with open(intv.content, 'rb') as sent_file:
+    with open(intv.content_div, 'rb') as sent_file:
         rdata = sent_file.read()
-        sent_data = dec(cyp_key, aad, nonce, rdata, intv.gd_cmk)
-    sent_data = binary_to_dict(sent_data)
+        pre_data = dec(cyp_key, aad, nonce, rdata, intv.gs_cmk)
+    sent_data = binary_to_dict(pre_data)
     
+    tstr = ''
+    for st in sent_data:
+        tstr = tstr + st['sentence'] + ' '
+
+    doc_list.append(tstr)
+
+
+    '''
     if intv.stt_engine=='naver':
         #sdata = sent_data['text'].replace('\r',' ')
         sdata = sent_data['text']
@@ -138,6 +147,7 @@ def similarity(request, method, sid, label):
             tstr = tstr + st['msg'] + ' '
         #tstr = tstr.replace('\r',' ')
         doc_list.append(tstr)
+    '''
 
     label = label.replace('\r',' ')
     doc_list.append(label)
